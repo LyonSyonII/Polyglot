@@ -1,0 +1,9 @@
+[package]
+name = "rust_polyglot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+pest = "2.1.3"
+clap = "3.0.14"
+# aaaaab
