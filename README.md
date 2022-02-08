@@ -1,4 +1,4 @@
-## Variable Initializations
+### Variable Initializations
     var integer = 5
     var number = 5.5
     var boolean = true|false
@@ -9,7 +9,7 @@
     var other_int = tuple.1
 
 
-## Variable declaration (without initialization)
+### Variable declaration (without initialization)
     var integer: int
     var number: num 
     var boolean: bool
@@ -18,7 +18,7 @@
     var tuple: str, int
 
 
-## Structs
+### Structs
 Structs are basically enhanced tuples with member names
     
     var person = age: 52, name: "Alex"
@@ -35,7 +35,7 @@ It is useful to declare your structs as types for reusability and understandabil
     print(person.age)
 
 
-## Lists
+### Lists
     var int_list = [5, 6, 7, 8]
     var num_list = [5, 5.5, 8.8]
 
@@ -87,10 +87,10 @@ You can define the starting size of a list
     var list: [int, 3]
 
 
-## Dictionaries
+### Dictionaries
 
 
-## Control flow
+### Control flow
     if condition
         // something
     end
@@ -114,7 +114,7 @@ Also, in this case one-liners are supported, using "->" next to the condition
     else            -> // something
 
 
-## Loops
+### Loops
     while condition
         // something
     end
@@ -128,7 +128,7 @@ Also, in this case one-liners are supported, using "->" next to the condition
     end
 
 
-## Functions (indentation not necessary)
+### Functions (indentation not necessary)
     fn void
         // something
     end
