@@ -6,7 +6,7 @@ Variable types will be inferred.
     var boolean = true|false
     var character = 'a'
     var string = "abc"
-    var tuple = "abc", 5
+    var tuple = ("abc", 5)
 
 Access the elements of an anonymous tuple with their index.
     
@@ -21,7 +21,7 @@ If a variable is not initialized, the type must be annotated explicitely.
     var boolean: bool
     var character: char
     var string: str
-    var tuple: str, int
+    var tuple: (str, int)
 
 ### Named Tuples (Structs)
 Structs are basically enhanced tuples with member names.
@@ -35,8 +35,8 @@ You can define a struct with type anotations, just like any variable.
 
 It is useful to declare your structs as types for reusability and understandability.
     
-    type Person = age: num, name: str
-    var person: Person = 52, "Alex"     
+    type Person = (age: num, name: str)
+    var person: Person = (52, "Alex")     
     // If the explicit type anotation is not made, "person" will be treated as an anonymous tuple
     print(person.age)
 
@@ -264,10 +264,10 @@ Then use "ret"
     end
 
 
-You can return multiple things, order must be preserved when returning.
+You can return multiple things using a tuple, return order must be preserved.
     
-    fn return_multiple: int, num, char
-        25, 3.14, 'a'
+    fn return_multiple: (int, num, char)
+        (25, 3.14, 'a')
     end
 
 To return early, use the "ret" keyword. The last line in a function will always be treated as an implicit return.
@@ -298,12 +298,8 @@ Tuples can be destructured when passed as args, so a more idiomatic way to write
         // something
     end
     
-    tuple = 89, 99.99, 'z'
+    tuple = (89, 99.99, 'z')
     tuple_idiomatic_args(tuple)
-
-It is recommended to create a type definition for Structs that you'll be using frequently.
-    
-    type Animal = name: str, species: Species
 
 ### Expressions
 Every last line is implicitely an expression for Polyglot, meaning that you can assign if / matches to variables.

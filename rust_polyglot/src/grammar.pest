@@ -1,3 +1,46 @@
-MAIN = { NOTHING ~ EXPR* ~ NOTHING }
+MAIN = _{ NOTHING ~ (Expr ~ NL)* ~ (Expr ~ NL?)? ~ NOTHING }
 
+// Character rules
+NOTHING = _{ "" }
+WHITESPACE = _{ " " | "\t" }
+NL = _{ NEWLINE+ }
+CM = @{ "," ~ WHITESPACE+ }
+CL = @{ ":" ~ WHITESPACE+ }
+
+// Expressions
+Expr = _{ (Init) }
+RetExpr = { "if/elseif/else/match" }
+Init = { "var" ~ Name ~ "=" ~ VALUE }
+
+// Complex values
+Name = { (ASCII_ALPHA | "_")+ }
+Index = { ASCII_DIGIT }
+VALUE = _{ Op | Num | Int | Bool | Char | Str | Tuple | NamedTuple | TupleAccess | Call | Name | RetExpr }
+Call = { Name ~ "(" ~ Args? ~ ")" }
+Args = { VALUE ~ ("," ~ VALUE)* }
+
+// Primitives
+Int = { "-"? ~ ASCII_DIGIT+ }
+Num = { "-"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ } 
+Bool = { "true" | "false" | Cmp }
+Char = { "'" ~ ASCII_ALPHA ~ "'" }
+Str = { "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
+
+// Composed
+Tuple = { "(" ~ VALUE ~ ("," ~ VALUE)+ ~ ")" }
+NamedTuple = { "(" ~ TupleVal ~ ("," ~ TupleVal)+ ~ ")" }
+TupleVal = { Name ~ ":" ~ VALUE }
+TupleMem = { Name ~ ":" ~ Type }
+TupleAccess = { Name ~ "." ~ (Name | Index) }
+
+// Recursives
+Op = { "not_implemented" }
+Cmp = { "not_implemented" }
+
+
+// Types
+Type = { TInt | TNum | TBool }
+TInt = { "int" }
+TNum = { "num" }
+TBool = { "bool" }
 
