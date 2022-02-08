@@ -1,4 +1,4 @@
-MAIN = _{ NOTHING ~ (Expr ~ NL)* ~ (Expr ~ NL?)? ~ NOTHING }
+Main = { NOTHING ~ (Expr ~ NL)* ~ (Expr ~ NL?)? ~ NOTHING }
 
 // Character rules
 NOTHING = _{ "" }
@@ -7,17 +7,23 @@ NL = _{ NEWLINE+ }
 CM = @{ "," ~ WHITESPACE+ }
 CL = @{ ":" ~ WHITESPACE+ }
 
+// Word rules
+KW = { "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
+
 // Expressions
-Expr = _{ (Init) }
+Expr = _{ (Init | Decl | Assig | Typedef) }
 RetExpr = { "if/elseif/else/match" }
-Init = { "var" ~ Name ~ "=" ~ VALUE }
+Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
+Decl = { "var" ~ Name ~ ":" ~ Type }
+Assig = { Name ~ "=" ~ Value }
+Typedef = { "type" ~ Name ~ "=" ~ Type }
 
 // Complex values
-Name = { (ASCII_ALPHA | "_")+ }
+Name = { !KW ~ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
-VALUE = _{ Op | Num | Int | Bool | Char | Str | Tuple | NamedTuple | TupleAccess | Call | Name | RetExpr }
+Value = _{ Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name | RetExpr }
 Call = { Name ~ "(" ~ Args? ~ ")" }
-Args = { VALUE ~ ("," ~ VALUE)* }
+Args = { Value ~ ("," ~ Value)* }
 
 // Primitives
 Int = { "-"? ~ ASCII_DIGIT+ }
@@ -27,10 +33,10 @@ Char = { "'" ~ ASCII_ALPHA ~ "'" }
 Str = { "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 
 // Composed
-Tuple = { "(" ~ VALUE ~ ("," ~ VALUE)+ ~ ")" }
-NamedTuple = { "(" ~ TupleVal ~ ("," ~ TupleVal)+ ~ ")" }
-TupleVal = { Name ~ ":" ~ VALUE }
-TupleMem = { Name ~ ":" ~ Type }
+Tuple = { "(" ~ Value ~ ("," ~ Value)+ ~ ")" }
+Struct = { "(" ~ StructVal ~ ("," ~ StructVal)+ ~ ")" }
+StructVal = { Name ~ ":" ~ Value }
+StructMem = { Name ~ ":" ~ Type }
 TupleAccess = { Name ~ "." ~ (Name | Index) }
 
 // Recursives
@@ -39,8 +45,14 @@ Cmp = { "not_implemented" }
 
 
 // Types
-Type = { TInt | TNum | TBool }
+Type = { TInt | TNum | TBool | TChar | TStr | TTuple | TStruct | TCustom }
 TInt = { "int" }
 TNum = { "num" }
 TBool = { "bool" }
+TChar = { "char" }
+TStr = { "str" }
+TTuple = { "(" ~ Type ~ ("," ~ Type)+ ~ ")" }
+TStruct = { "(" ~ StructMem ~ ("," ~ StructMem)+ ~ ")" }
+TCustom = { (ASCII_ALPHA | "_")+ }
+
 
