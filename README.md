@@ -305,6 +305,21 @@ It is recommended to create a type definition for Structs that you'll be using f
     
     type Animal = name: str, species: Species
 
+### Expressions
+Every last line is implicitely an expression for Polyglot, meaning that you can assign if / matches to variables.
+If you're familiar with the Rust programming language, this behaviour is the same.
+
+	var str_bool = "true"
+	var parsed_bool: bool = 	
+		match
+			"true" => true
+			"false" => false
+		end
+
+	// In this case parsed_bool = true
+
+It is important to note that all branches must return values of the same type, as a variable cannot be of multiple types.
+
 ### Basic operations
     var number = 10
     var ops: num
