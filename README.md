@@ -1,15 +1,22 @@
-### Variable Initializations
+### Variable Initialization
+Variable types will be inferred
+    
     var integer = 5
     var number = 5.5
     var boolean = true|false
     var character = 'a'
     var string = "abc"
     var tuple = "abc", 5
+
+Access the elements of an anonymous tuple with their index
+    
     var other_string = tuple.0
     var other_int = tuple.1
 
 
 ### Variable declaration (without initialization)
+If the variable is not initialized, the type must be annotated explicitely
+    
     var integer: int
     var number: num 
     var boolean: bool
@@ -31,14 +38,15 @@ You can define a struct with type anotations, just like any variable
 It is useful to declare your structs as types for reusability and understandability
     
     type Person = age: num, name: str
-    var person: Person = 52, "Alex"     // If the explicit type anotation is not made, "person" will be treated as an anonymous tuple
+    var person: Person = 52, "Alex"     
+    // If the explicit type anotation is not made, "person" will be treated as an anonymous tuple
     print(person.age)
 
 
 ### Lists
     var int_list = [5, 6, 7, 8]
     var num_list = [5, 5.5, 8.8]
-
+    
     var str_list: [str]
     var tuple_list: [(str, bool)]
     tuple_list = [("true", true), ("false", false)]
@@ -53,34 +61,41 @@ You can also add multiple lists, but they must be of the same type
     
     var list = [1, 2, 3]
     var other = [4, 5, 6]
-    list += other                   // list = [1, 2, 3, 4, 5, 6]
+    list += other                   
+    // list = [1, 2, 3, 4, 5, 6]
 
 To remove an element from a list, use the - operator
     
     var list = [1, 2, 3]
-    list -= 1                       // list = [2, 3]
+    list -= 1                       
+    // list = [2, 3]
 
 You can substract multiple lists, basically removing the first intersection
-
+    
     var list = [1, 2, 3]
     var other = [2, 3]
-    list -= other                   // list = [1]
+    list -= other                   
+    // list = [1]
 
 The remove operator will only remove the first occurrence, if you want to remove all of them, use the -- operator
-
+    
     var list = [1, 2, 3, 1, 2, 3]
-    list --= 1                      // list = [2, 3, 2, 3]
+    list --= 1                      
+    // list = [2, 3, 2, 3]
     var other = [1, 2]
-    list --= other                  // list = [3, 3]
+    list --= other                  
+    // list = [3, 3]
 
 To access a specific element on a list, use [index]
-
+    
     var list = ["hello", "world"]
-    print(list[1])                  // output -> "world"
+    print(list[1])                  
+    // output -> "world"
 
 If an out-of-bounds error is detected (trying to access an element that isn't there) the program will be terminated at runtime.
     
-    print(list[2])                  // output-> ERROR: Out-of-bounds in line X, "list[2]".
+    print(list[2])                  
+    // output-> ERROR: Out-of-bounds in line X, "list[2]".
 
 You can define the starting size of a list
     
@@ -88,7 +103,7 @@ You can define the starting size of a list
 
 
 ### Dictionaries
-
+Dictionaries act like lists, 
 
 ### Control flow
     if condition
