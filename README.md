@@ -13,7 +13,6 @@ Access the elements of an anonymous tuple with their index.
     var other_string = tuple.0
     var other_int = tuple.1
 
-
 ### Variable declaration (without initialization)
 If a variable is not initialized, the type must be annotated explicitely.
     
@@ -23,7 +22,6 @@ If a variable is not initialized, the type must be annotated explicitely.
     var character: char
     var string: str
     var tuple: str, int
-
 
 ### Named Tuples (Structs)
 Structs are basically enhanced tuples with member names.
@@ -125,7 +123,6 @@ You can define the starting size of a list.
     
     var list: [int, 3]
 
-
 ### Dictionaries
 Dictionaries act like lists, but instead of using the index of insertion to access each element, you use a custom defined one.
     
@@ -160,7 +157,7 @@ If all the conditions above are false, execute the code inside the `else`.
 
 The "end" keyword can be omitted when only one expression is inside the if/elseif/else.
 Also, in this case one-liners are supported, using "=>" next to the condition.
-
+    
     // Omit "end"    
     if condition
         // something
@@ -169,7 +166,7 @@ Also, in this case one-liners are supported, using "=>" next to the condition.
     if condition    => // something
     elif condition  => // something
     else            => // something
-
+    
     // NOT VALID
     if condition // something
 
@@ -179,7 +176,7 @@ You can chain conditions with the "&&" and "||" operators
     if a > 0 && a < 5
         print("a is in the (0, 5) range")
     end
-
+    
     // Check if a < 0 OR a > 0
     if a < 0 || a > 0
         print("a is not 0")
@@ -222,11 +219,10 @@ You can write multiple lines on each block, but then the pattern must finish wit
     end
 
 You can match against multiple values.
-
+    
     match number
         1 | 2 | 3 => print("one, two or three")
         _         => print("other numbers") 
-
 
 ### Loops
     while condition
@@ -241,7 +237,6 @@ You can match against multiple values.
         // something
     end
 
-
 ### Functions
 Indentation is not necessary, but it is strongly recommended.
     
@@ -254,7 +249,7 @@ Indentation is not necessary, but it is strongly recommended.
     end
     
 To return something from a function, first anotate the type of the return.
-
+    
     fn return: int
 
 Then use "ret"
@@ -310,9 +305,7 @@ It is recommended to create a type definition for Structs that you'll be using f
     
     type Animal = name: str, species: Species
 
-
-
-## Basic operations
+### Basic operations
     var number = 10
     var ops: num
     
@@ -325,12 +318,12 @@ It is recommended to create a type definition for Structs that you'll be using f
     ops = 5 - 6
     ops = 15 - number
     ops -= 65
-
+    
     // Multiplication
     ops = 5 * 6
     ops = number * 15
     ops *= 65
-
+    
     // Division
     ops = 5 / 6
     ops = number / 15
@@ -340,3 +333,26 @@ It is recommended to create a type definition for Structs that you'll be using f
     ops = 5^6
     ops = number ^ 15
     ops ^= 65
+
+### Comparations
+
+    // Equal
+    if a = b
+
+    // Not equal
+    if a != b
+    
+    // Smaller
+    if a < b
+    
+    // Smaller or equal
+    if a <= b
+
+    // Larger
+    if a > b
+
+    // Larger or equal
+    if a >= b
+
+    // Negation
+    if !a
