@@ -308,8 +308,8 @@ If you're familiar with the Rust programming language, this behaviour is the sam
 	var str_bool = "true"
 	var parsed_bool: bool = 	
 		match
-			"true" => true
-			"false" => false
+		    "true" => true
+		    "false" => false
 		end
 
 	// In this case parsed_bool = true
