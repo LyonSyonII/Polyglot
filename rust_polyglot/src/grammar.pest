@@ -11,7 +11,7 @@ CL = @{ ":" ~ WHITESPACE+ }
 KW = _{ "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
 COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
-Expr = { (Init | Decl | Assig | Typedef) }
+Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef) }
 RetExpr = { "if/elseif/else/match" }
 
 Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
@@ -29,12 +29,10 @@ DivAssig = { Name ~ "/=" ~ Value }
 PowAssig = { Name ~ "^=" ~ Value }
 ModAssig = { Name ~ "%=" ~ Value }
 
-
-
 // Complex values
 Name = @{ !KW ~ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
-Value = { Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | Dict | Call | Name | RetExpr }
+Value = { Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | DictAccess | Call | Name | RetExpr }
 Call = { Name ~ "(" ~ Args? ~ ")" }
 Args = { Value ~ ("," ~ Value)* }
 
@@ -52,23 +50,25 @@ StructVal = { Name ~ ":" ~ Value }
 TupleAccess = { Name ~ "." ~ TupleAccessType }
 TupleAccessType = { Name | Index }
 List = { "[" ~ Value ~ ("," ~ Value)* ~ "]" }
+ListAccess = { Name ~ "[" ~ Int ~ "]" }
 DictPair = { Value ~ "->" ~ Value }
 Dict = { "[" ~ DictPair ~ ("," ~ DictPair)* ~ "]" }
+DictAccess = { Name ~ "[" ~ Value ~ "]" }
 
 // Recursives
 LHS = _{ Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name }
 RHS = _{ Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name }
 Op = { OPS }
 
-OPS = _{ Add | Sub | Mul | Div | Pow }
+OPS = _{ Add | Sub | Mul | Div | Mod | Pow }
 Add = { LHS ~ "+" ~ RHS }
 Sub = { LHS ~ "-" ~ RHS }
 Mul = { LHS ~ "/" ~ RHS }
 Div = { LHS ~ "/" ~ RHS }
+Mod = { LHS ~ "%" ~ RHS }
 Pow = { LHS ~ "^" ~ RHS }
 
 Cmp = { "not_implemented" }
-
 
 // Types
 Type = { TInt | TNum | TBool | TChar | TStr | TTuple | TStruct | TList | TDict | TCustom }
