@@ -13,10 +13,23 @@ COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
 Expr = { (Init | Decl | Assig | Typedef) }
 RetExpr = { "if/elseif/else/match" }
+
 Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
+
 Decl = { "var" ~ Name ~ ":" ~ Type }
-Assig = { Name ~ "=" ~ Value }
+
 Typedef = { "type" ~ Name ~ "=" ~ Type }
+
+Assig = { Name ~ "=" ~ Value }
+AddAssig = { Name ~ "+=" ~ Value }
+SubAssig = { Name ~ "-=" ~ Value }
+ListRemAssig = { Name ~ "--=" ~ Value }
+MulAssig = { Name ~ "*=" ~ Value }
+DivAssig = { Name ~ "/=" ~ Value }
+PowAssig = { Name ~ "^=" ~ Value }
+ModAssig = { Name ~ "%=" ~ Value }
+
+
 
 // Complex values
 Name = @{ !KW ~ (ASCII_ALPHA | "_")+ }

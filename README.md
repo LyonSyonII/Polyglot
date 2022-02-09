@@ -339,6 +339,11 @@ It is important to note that all branches must return values of the same type, a
     ops = 5 / 6
     ops = number / 15
     ops /= 65
+
+    // Modulus
+    ops = 5 % 6
+    ops = number % 15
+    ops %= 65
     
     // Exponentiation
     ops = 5^6

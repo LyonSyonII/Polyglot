@@ -129,6 +129,8 @@ fn parse_value(value: nodes::Value, scope: &mut Scope) -> Value {
         nodes::ValueChildren::Name(n) => Value::Var(n.text().into()),
         
         // TODO! Complex values
+
+        // TODO! Check if both values are of the same type
         nodes::ValueChildren::Op(_) => todo!(),
         nodes::ValueChildren::RetExpr(_) => todo!(),
         nodes::ValueChildren::Call(_) => todo!(),
