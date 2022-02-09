@@ -1,9 +1,9 @@
-Main = { NOTHING ~ (Expr ~ NL)* ~ (Expr ~ NL?)? ~ NOTHING }
+Main = { NOTHING ~ Expr* ~ NOTHING }
 
 // Character rules
 NOTHING = _{ "" }
-WHITESPACE = _{ " " | "\t" }
-NL = _{ NEWLINE+ }
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+NL = _{ NEWLINE }
 CM = @{ "," ~ WHITESPACE+ }
 CL = @{ ":" ~ WHITESPACE+ }
 

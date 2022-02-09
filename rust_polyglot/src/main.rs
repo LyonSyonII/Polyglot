@@ -1,7 +1,10 @@
 use clap::Parser as P;
+use indexmap::IndexMap;
 use pest::Parser as Pest;
 use pest::iterators::{ Pairs, Pair };
 use serde::{Deserialize, Serialize, Serializer};
+use parking_lot::Mutex;
+
 mod tree;
 use tree::*;
 
@@ -15,6 +18,14 @@ struct Cli {
 #[grammar = "grammar.pest"]
 struct Parser;
 
+lazy_static::lazy_static! {
+    static ref CTX: Mutex<String> = Mutex::new(String::new());
+}
+
+fn clone_ctx() -> String {
+    CTX.lock().clone()
+}
+
 fn main() {
     let cli = Cli::parse();
     let file = std::fs::read_to_string(&cli.file).unwrap();
@@ -22,37 +33,55 @@ fn main() {
     let root = nodes::Main::new(Parser::parse(Rule::Main, &file).unwrap().next().unwrap());
     
     let mut main = Main::new(Vec::new());
+    let mut global = Scope::new(vec![]);
+    
     for expr in root.list_Expr() {
-        let expr = parse_expr(expr);
-        main.0.push(expr);
+        *CTX.lock() = expr.text().into();
+        main.0.push(parse_expr(expr, &mut global));
     }
     
     let buffer = serde_yaml::to_string(&main).unwrap();
     println!("{buffer}");
+
+    //let buffer = serde_json::to_string_pretty(&main).unwrap();
+    //println!("{buffer}");
 }
 
-fn parse_expr(expr: nodes::Expr) -> tree::Expr {
+fn parse_expr(expr: nodes::Expr, scope: &mut Scope) -> Expr {
     match expr.to_enum() {
         nodes::ExprChildren::Assig(_) => todo!(),
         nodes::ExprChildren::Decl(_) => todo!(),
         nodes::ExprChildren::Typedef(_) => todo!(),
-        nodes::ExprChildren::Init(init) => tree::Expr::Init(parse_init(init)),
+        nodes::ExprChildren::Init(init) => Expr::Init(parse_init(init, scope)),
     }
 }
 
-fn parse_init(init: nodes::Init) -> tree::Init {
-    let name = init.get_Name().text().into();
-    let value = parse_value(init.get_Value());
+fn parse_init(init: nodes::Init, scope: &mut Scope) -> Init {
+    let name = init.get_Name().text().to_owned();
+    let value = parse_value(init.get_Value(), scope);
+    let ctx = clone_ctx();
+    
     
     let ty = match init.get_Type() {
-        Some(t) => parse_type(t),
-        None => parse_type_from_value(&value)
+        // Check if variable is of the same type as assignment
+        Some(t) => {
+            let t = parse_type(t);
+            let vt = parse_type_from_value(&value, scope);
+            if t != vt {
+                eprintln!("ERROR: Assigned value of type {vt:?} to variable of type {t:?}.\nContext: {}", ctx);
+                std::process::exit(1)
+            }
+            t
+        },
+        // No explicit type annotation, inferring type from value
+        None => parse_type_from_value(&value, scope)
     };
 
-    tree::Init::new(name, ty, value)
+    scope.insert(name.clone(), ty.clone());
+    Init::new(name, ty, value, ctx)
 }
 
-fn parse_value(value: nodes::Value) -> tree::Value {
+fn parse_value(value: nodes::Value, scope: &mut Scope) -> Value {
     match value.to_enum() {
         nodes::ValueChildren::Int(i) => Value::Int(i.text().parse().unwrap()),
         nodes::ValueChildren::Num(n) => Value::Num(n.text().parse().unwrap()),
@@ -68,20 +97,19 @@ fn parse_value(value: nodes::Value) -> tree::Value {
         nodes::ValueChildren::Tuple(t) => Value::Tuple(
             Tuple::new(
                 t.list_Value()
-                .map(|val| parse_value(val))
+                .map(|val| parse_value(val, scope))
                 .collect::<Vec<Value>>()
             )
         ),
         nodes::ValueChildren::Struct(s) => Value::Struct(
-            Struct::new(
-                s.list_StructVal()
-                    .map(|sval| (
-                            sval.get_Name().text().into(), 
-                            parse_value(sval.get_Value())
-                        ))
-                    .collect::<Vec<(String, Value)>>()
-            )
-        ),
+            Struct::new( {
+                let mut map = IndexMap::new();
+                for sval in s.list_StructVal() {
+                    map.insert(sval.get_Name().text().to_owned(), parse_value(sval.get_Value(), scope));
+                }
+                map
+            }
+        )),
         nodes::ValueChildren::TupleAccess(ta) => Value::TupleAccess(
             TupleAccess::new(
                 ta.get_Name().text().into(), 
@@ -94,14 +122,13 @@ fn parse_value(value: nodes::Value) -> tree::Value {
         nodes::ValueChildren::Name(n) => Value::Var(n.text().into()),
 
         // TODO! Complex values
+        nodes::ValueChildren::Op(_) => todo!(),
         nodes::ValueChildren::RetExpr(_) => todo!(),
         nodes::ValueChildren::Call(_) => todo!(),
-        nodes::ValueChildren::Op(_) => todo!(),
     }
 }
 
 fn parse_type(ty: nodes::Type) -> Type {
-
     match ty.to_enum() {
         nodes::TypeChildren::TInt(_) => Type::Int,
         nodes::TypeChildren::TNum(_) => Type::Num,
@@ -116,55 +143,105 @@ fn parse_type(ty: nodes::Type) -> Type {
             )
         ),
         nodes::TypeChildren::TStruct(s) => Type::Struct(
-            TStruct::new(
-                s.list_StructMem()
-                    .map(|sm| parse_type(sm.get_Type()))
-                    .collect::<Vec<Type>>()
-            )
+            TStruct::new({
+                let mut map = IndexMap::new();
+                for mem in s.list_StructMem() {
+                    map.insert(mem.get_Name().text().into(), parse_type(mem.get_Type()));
+                }
+                map
+            })
         ),
         nodes::TypeChildren::TCustom(c) => Type::Custom(c.text().into()),
     }
 }
 
-fn parse_type_from_value(value: &tree::Value) -> tree::Type {
+fn parse_type_from_value(value: &Value, scope: &mut Scope) -> Type {
     match value {
-        tree::Value::Int(_) => tree::Type::Int,
-        tree::Value::Num(_) => tree::Type::Num,
-        tree::Value::Bool(_) => tree::Type::Bool,
-        tree::Value::Char(_) => tree::Type::Char,
-        tree::Value::Str(_) => tree::Type::Str,
-        tree::Value::Tuple(t) => {
-            tree::Type::Tuple(
-                tree::TTuple::new(
+        Value::Int(_) => Type::Int,
+        Value::Num(_) => Type::Num,
+        Value::Bool(_) => Type::Bool,
+        Value::Char(_) => Type::Char,
+        Value::Str(_) => Type::Str,
+        Value::Tuple(t) => {
+            Type::Tuple(
+                TTuple::new(
                 t.values
                     .iter()
-                    .map(parse_type_from_value)
-                    .collect::<Vec<tree::Type>>()
+                    .map(|val| parse_type_from_value(val, scope))
+                    .collect::<Vec<Type>>()
                 )
             )
         },
-        tree::Value::Struct(s) => {
-            tree::Type::Struct(
-                tree::TStruct::new(
-                    s.values
-                    .iter()
-                        .map(|mem| parse_type_from_value(&mem.1))
-                        .collect::<Vec<tree::Type>>()
-                )
+        Value::Struct(s) => {
+            Type::Struct(
+                TStruct::new({
+                    let mut map = IndexMap::new();
+                    for mem in &s.values {
+                        map.insert(mem.0.clone(), parse_type_from_value(mem.1, scope));
+                    }
+                    map
+                })
             )
         },
-
+        
         // TODO! More complex typing, based on already declared variables. I need to have a dictionary with all the variables/structs and their types
-        tree::Value::Var(var) => todo!(),
-        tree::Value::TupleAccess(ta) => {
-            todo!()
+        Value::Var(var) => {
+            if let Some(var_t) = scope.get(var).cloned() {
+                var_t
+            } else {
+                eprintln!("ERROR: Variable {var} does not exist.\nContext: {}", CTX.lock());
+                std::process::exit(1)
+            }
         },
-        tree::Value::Op(_) => todo!(),
-        tree::Value::Call(_) => todo!(),
-        tree::Value::RetExpr(_) => todo!(),
+        Value::TupleAccess(ta) => {
+            if let Some(tuple_type) = scope.get(&ta.name) {
+                match &ta.access {
+                    TupleAccessType::Member(m) => {
+                        match tuple_type {
+                            Type::Tuple(_) => {
+                                eprintln!("ERROR: Tuples have no members. Use their index instead.\nContext: {}", CTX.lock());
+                                std::process::exit(1)
+                            },
+                            Type::Struct(s) => {
+                                if let Some(ty) = s.types.get(m) {
+                                    ty.clone()
+                                } else {
+                                    eprintln!("ERROR: {}.{} does not exist.\nContext: {}", ta.name, m, CTX.lock());
+                                    std::process::exit(1)
+                                }
+                            },
+                            _ => unreachable!()
+                        }
+                    },
+                    TupleAccessType::Index(i) => {
+                        match tuple_type {
+                            Type::Tuple(t) => {
+                                if let Some(ty) = t.types.get(*i) {
+                                    ty.clone()
+                                } else {
+                                    eprintln!("ERROR: Trying to access index {i} of Tuple {}, which only has {} elements.\nContext: {}", ta.name, t.types.len(), CTX.lock());
+                                    std::process::exit(1)
+                                }
+                            },
+                            Type::Struct(_) => {
+                                eprintln!("ERROR: Trying to access Struct {} with index. Use the name of the members instead.\nContext: {}", ta.name, CTX.lock());
+                                std::process::exit(1)
+                            },
+                            _ => unreachable!()
+                        }
+                    },
+                }
+            } else {
+                eprintln!("ERROR: Tuple/Struct {} does not exist.\nContext: {}", ta.name, CTX.lock());
+                std::process::exit(1)
+            }
+        },
+        Value::Op(_) => todo!(),
+        Value::Call(_) => todo!(),
+        Value::RetExpr(_) => todo!(),
     }
 }
 
-fn parse_cmp(cmp: nodes::Cmp) -> tree::Cmp {
+fn parse_cmp(cmp: nodes::Cmp) -> Cmp {
     todo!()
 }
