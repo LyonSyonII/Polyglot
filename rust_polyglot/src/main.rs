@@ -8,6 +8,8 @@ use parking_lot::Mutex;
 mod tree;
 use tree::*;
 
+// TODO! Check all values on list and dictionary too see if all have the same type
+
 #[derive(clap::Parser)]
 #[clap(version, about)]
 struct Cli {
@@ -93,7 +95,7 @@ fn parse_value(value: nodes::Value, scope: &mut Scope) -> Value {
             }
         },
         nodes::ValueChildren::Char(c) => Value::Char(c.text().as_bytes()[0] as char),
-        nodes::ValueChildren::Str(s) => Value::Str(s.text().into()),
+        nodes::ValueChildren::Str(s) => Value::Str(s.text().strip_prefix('"').unwrap().strip_suffix('"').unwrap().into()),
         nodes::ValueChildren::Tuple(t) => Value::Tuple(
             Tuple::new(
                 t.list_Value()
@@ -119,8 +121,13 @@ fn parse_value(value: nodes::Value, scope: &mut Scope) -> Value {
                     }
             )
         ),
+        nodes::ValueChildren::List(l) => Value::List(l.list_Value().map(|val| parse_value(val, scope)).collect::<Vec<Value>>()),
+        
+        nodes::ValueChildren::Dict(d) => {
+            Value::Dict(Box::new(d.list_DictPair().map(|pair| (parse_value(pair.get_first_Value(), scope), parse_value(pair.get_second_Value(), scope))).collect::<Vec<(Value, Value)>>()))
+        }
         nodes::ValueChildren::Name(n) => Value::Var(n.text().into()),
-
+        
         // TODO! Complex values
         nodes::ValueChildren::Op(_) => todo!(),
         nodes::ValueChildren::RetExpr(_) => todo!(),
@@ -151,6 +158,13 @@ fn parse_type(ty: nodes::Type) -> Type {
                 map
             })
         ),
+        nodes::TypeChildren::TList(l) => Type::List(Box::new(parse_type(l.get_Type()))),
+        
+        nodes::TypeChildren::TDict(d) => {
+            Type::Dict(Box::new((parse_type(d.get_first_Type()), parse_type(d.get_second_Type()))))
+        },
+
+        // On typedef add type to variables, then check its value and return it
         nodes::TypeChildren::TCustom(c) => Type::Custom(c.text().into()),
     }
 }
@@ -183,6 +197,8 @@ fn parse_type_from_value(value: &Value, scope: &mut Scope) -> Type {
                 })
             )
         },
+        Value::List(l) => Type::List(Box::new(parse_type_from_value(&l[0], scope))),
+        Value::Dict(d) => Type::Dict(Box::new((parse_type_from_value(&d[0].0, scope), parse_type_from_value(&d[0].1, scope)))),
         
         // TODO! More complex typing, based on already declared variables. I need to have a dictionary with all the variables/structs and their types
         Value::Var(var) => {

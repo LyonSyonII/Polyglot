@@ -2,14 +2,14 @@ Main = { NOTHING ~ Expr* ~ NOTHING }
 
 // Character rules
 NOTHING = _{ "" }
-WHITESPACE = _{ " " | "\t" | NEWLINE }
+WHITESPACE = _{ " " | "\t" | NEWLINE | COMMENT }
 NL = _{ NEWLINE }
 CM = @{ "," ~ WHITESPACE+ }
 CL = @{ ":" ~ WHITESPACE+ }
 
 // Word rules
-KW = { "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
-
+KW = _{ "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
+COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
 Expr = { (Init | Decl | Assig | Typedef) }
 RetExpr = { "if/elseif/else/match" }
@@ -21,7 +21,7 @@ Typedef = { "type" ~ Name ~ "=" ~ Type }
 // Complex values
 Name = @{ !KW ~ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
-Value = { Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name | RetExpr }
+Value = { Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | Dict | Call | Name | RetExpr }
 Call = { Name ~ "(" ~ Args? ~ ")" }
 Args = { Value ~ ("," ~ Value)* }
 
@@ -33,27 +33,40 @@ Char = @{ "'" ~ ASCII_ALPHA ~ "'" }
 Str = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 
 // Composed
-Tuple = { "(" ~ Value ~ ("," ~ Value)+ ~ ")" }
-Struct = { "(" ~ StructVal ~ ("," ~ StructVal)+ ~ ")" }
+Tuple = { "(" ~ Value ~ ("," ~ Value)* ~ ")" }
+Struct = { "(" ~ StructVal ~ ("," ~ StructVal)* ~ ")" }
 StructVal = { Name ~ ":" ~ Value }
-StructMem = { Name ~ ":" ~ Type }
 TupleAccess = { Name ~ "." ~ TupleAccessType }
 TupleAccessType = { Name | Index }
+List = { "[" ~ Value ~ ("," ~ Value)* ~ "]" }
+DictPair = { Value ~ "->" ~ Value }
+Dict = { "[" ~ DictPair ~ ("," ~ DictPair)* ~ "]" }
 
 // Recursives
-Op = { "not_implemented" }
+LHS = _{ Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name }
+RHS = _{ Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name }
+Op = { OPS }
+
+OPS = _{ Add | Sub | Mul | Div | Pow }
+Add = { LHS ~ "+" ~ RHS }
+Sub = { LHS ~ "-" ~ RHS }
+Mul = { LHS ~ "/" ~ RHS }
+Div = { LHS ~ "/" ~ RHS }
+Pow = { LHS ~ "^" ~ RHS }
+
 Cmp = { "not_implemented" }
 
 
 // Types
-Type = { TInt | TNum | TBool | TChar | TStr | TTuple | TStruct | TCustom }
+Type = { TInt | TNum | TBool | TChar | TStr | TTuple | TStruct | TList | TDict | TCustom }
 TInt = { "int" }
 TNum = { "num" }
 TBool = { "bool" }
 TChar = { "char" }
 TStr = { "str" }
-TTuple = { "(" ~ Type ~ ("," ~ Type)+ ~ ")" }
-TStruct = { "(" ~ StructMem ~ ("," ~ StructMem)+ ~ ")" }
+TTuple = { "(" ~ Type ~ ("," ~ Type)* ~ ")" }
+StructMem = { Name ~ ":" ~ Type }
+TStruct = { "(" ~ StructMem ~ ("," ~ StructMem)* ~ ")" }
+TList  = { "[" ~ Type ~ "]" }
+TDict = { "[" ~ Type ~ "->" ~ Type ~ "]" }
 TCustom = { (ASCII_ALPHA | "_")+ }
-
-
