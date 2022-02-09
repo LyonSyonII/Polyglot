@@ -26,7 +26,7 @@ If a variable is not initialized, the type must be annotated explicitely.
 ### Named Tuples (Structs)
 Structs are basically enhanced tuples with member names.
     
-    var person = age: 52, name: "Alex"
+    var person = (age: 52, name: "Alex")
     var num = person.age
 
 You can define a struct with type anotations, just like any variable.

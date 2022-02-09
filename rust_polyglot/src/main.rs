@@ -1,7 +1,7 @@
 use clap::Parser as P;
 use pest::Parser as Pest;
 use pest::iterators::{ Pairs, Pair };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 mod tree;
 use tree::*;
 
@@ -20,12 +20,15 @@ fn main() {
     let file = std::fs::read_to_string(&cli.file).unwrap();
     
     let root = nodes::Main::new(Parser::parse(Rule::Main, &file).unwrap().next().unwrap());
-    println!("{root:#?}");
     
-    let mut main = tree::Main(Vec::new());
+    let mut main = Main::new(Vec::new());
     for expr in root.list_Expr() {
-        main.0.push(parse_expr(expr));
+        let expr = parse_expr(expr);
+        main.0.push(expr);
     }
+    
+    let buffer = serde_yaml::to_string(&main).unwrap();
+    println!("{buffer}");
 }
 
 fn parse_expr(expr: nodes::Expr) -> tree::Expr {
@@ -40,18 +43,9 @@ fn parse_expr(expr: nodes::Expr) -> tree::Expr {
 fn parse_init(init: nodes::Init) -> tree::Init {
     let name = init.get_Name().text().into();
     let value = parse_value(init.get_Value());
-
+    
     let ty = match init.get_Type() {
-        Some(t) => match t.to_enum() {
-            nodes::TypeChildren::TBool(_) => todo!(),
-            nodes::TypeChildren::TCustom(_) => todo!(),
-            nodes::TypeChildren::TNum(_) => todo!(),
-            nodes::TypeChildren::TStruct(_) => todo!(),
-            nodes::TypeChildren::TTuple(_) => todo!(),
-            nodes::TypeChildren::TInt(_) => todo!(),
-            nodes::TypeChildren::TStr(_) => todo!(),
-            nodes::TypeChildren::TChar(_) => todo!(),
-        },
+        Some(t) => parse_type(t),
         None => parse_type_from_value(&value)
     };
 
@@ -78,18 +72,57 @@ fn parse_value(value: nodes::Value) -> tree::Value {
                 .collect::<Vec<Value>>()
             )
         ),
-        nodes::ValueChildren::Struct(s) => ,
-        nodes::ValueChildren::RetExpr(_) => todo!(),
-
+        nodes::ValueChildren::Struct(s) => Value::Struct(
+            Struct::new(
+                s.list_StructVal()
+                    .map(|sval| (
+                            sval.get_Name().text().into(), 
+                            parse_value(sval.get_Value())
+                        ))
+                    .collect::<Vec<(String, Value)>>()
+            )
+        ),
+        nodes::ValueChildren::TupleAccess(ta) => Value::TupleAccess(
+            TupleAccess::new(
+                ta.get_Name().text().into(), 
+                    match ta.get_TupleAccessType().to_enum() {
+                        nodes::TupleAccessTypeChildren::Name(n) => TupleAccessType::Member(n.text().into()),
+                        nodes::TupleAccessTypeChildren::Index(i) => TupleAccessType::Index(i.text().parse().unwrap()),
+                    }
+            )
+        ),
         nodes::ValueChildren::Name(n) => Value::Var(n.text().into()),
-        
+
+        // TODO! Complex values
+        nodes::ValueChildren::RetExpr(_) => todo!(),
         nodes::ValueChildren::Call(_) => todo!(),
-        nodes::ValueChildren::TupleAccess(_) => todo!(),
-    
-        
-        
-        
         nodes::ValueChildren::Op(_) => todo!(),
+    }
+}
+
+fn parse_type(ty: nodes::Type) -> Type {
+
+    match ty.to_enum() {
+        nodes::TypeChildren::TInt(_) => Type::Int,
+        nodes::TypeChildren::TNum(_) => Type::Num,
+        nodes::TypeChildren::TBool(_) => Type::Bool,
+        nodes::TypeChildren::TChar(_) => Type::Char,
+        nodes::TypeChildren::TStr(_) => Type::Str,
+        nodes::TypeChildren::TTuple(t) => Type::Tuple(
+            TTuple::new(
+                t.list_Type()
+                .map(parse_type)
+                .collect::<Vec<Type>>()
+            )
+        ),
+        nodes::TypeChildren::TStruct(s) => Type::Struct(
+            TStruct::new(
+                s.list_StructMem()
+                    .map(|sm| parse_type(sm.get_Type()))
+                    .collect::<Vec<Type>>()
+            )
+        ),
+        nodes::TypeChildren::TCustom(c) => Type::Custom(c.text().into()),
     }
 }
 
@@ -105,7 +138,7 @@ fn parse_type_from_value(value: &tree::Value) -> tree::Type {
                 tree::TTuple::new(
                 t.values
                     .iter()
-                    .map(|val| parse_type_from_value(&val))
+                    .map(parse_type_from_value)
                     .collect::<Vec<tree::Type>>()
                 )
             )
@@ -122,6 +155,7 @@ fn parse_type_from_value(value: &tree::Value) -> tree::Type {
         },
 
         // TODO! More complex typing, based on already declared variables. I need to have a dictionary with all the variables/structs and their types
+        tree::Value::Var(var) => todo!(),
         tree::Value::TupleAccess(ta) => {
             todo!()
         },
@@ -132,5 +166,5 @@ fn parse_type_from_value(value: &tree::Value) -> tree::Type {
 }
 
 fn parse_cmp(cmp: nodes::Cmp) -> tree::Cmp {
-
+    todo!()
 }

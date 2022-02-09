@@ -11,7 +11,7 @@ CL = @{ ":" ~ WHITESPACE+ }
 KW = { "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
 
 // Expressions
-Expr = _{ (Init | Decl | Assig | Typedef) }
+Expr = { (Init | Decl | Assig | Typedef) }
 RetExpr = { "if/elseif/else/match" }
 Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
 Decl = { "var" ~ Name ~ ":" ~ Type }
@@ -19,25 +19,26 @@ Assig = { Name ~ "=" ~ Value }
 Typedef = { "type" ~ Name ~ "=" ~ Type }
 
 // Complex values
-Name = { !KW ~ (ASCII_ALPHA | "_")+ }
+Name = @{ !KW ~ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
-Value = _{ Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name | RetExpr }
+Value = { Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name | RetExpr }
 Call = { Name ~ "(" ~ Args? ~ ")" }
 Args = { Value ~ ("," ~ Value)* }
 
 // Primitives
-Int = { "-"? ~ ASCII_DIGIT+ }
-Num = { "-"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ } 
+Int = @{ "-"? ~ ASCII_DIGIT+ }
+Num = @{ "-"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ } 
 Bool = { "true" | "false" | Cmp }
-Char = { "'" ~ ASCII_ALPHA ~ "'" }
-Str = { "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
+Char = @{ "'" ~ ASCII_ALPHA ~ "'" }
+Str = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 
 // Composed
 Tuple = { "(" ~ Value ~ ("," ~ Value)+ ~ ")" }
 Struct = { "(" ~ StructVal ~ ("," ~ StructVal)+ ~ ")" }
 StructVal = { Name ~ ":" ~ Value }
 StructMem = { Name ~ ":" ~ Type }
-TupleAccess = { Name ~ "." ~ (Name | Index) }
+TupleAccess = { Name ~ "." ~ TupleAccessType }
+TupleAccessType = { Name | Index }
 
 // Recursives
 Op = { "not_implemented" }
