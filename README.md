@@ -248,14 +248,10 @@ Indentation is not necessary, but it is strongly recommended.
         // something
     end
     
-To return something from a function, first anotate the type of the return.
-    
-    fn return: int
+To return something from a function you need to anotate it with the return type.
 
-Then use "ret"
-    fn return: int
-        // something
-        ret 5
+    fn function: int
+        67
     end
     
     fn return_args_fn(a: int, b: num, ...): string
@@ -302,8 +298,8 @@ Tuples can be destructured when passed as args, so a more idiomatic way to write
     tuple_idiomatic_args(tuple)
 
 ### Expressions
-Every last line is implicitely an expression for Polyglot, meaning that you can assign if / matches to variables.
-If you're familiar with the Rust programming language, this behaviour is the same.
+If/elif/else/match are expressions for Polyglot, meaning that you can assign them to variables.
+If you're familiar with the Rust programming language, the behaviour is the same.
 
 	var str_bool = "true"
 	var parsed_bool: bool = 	
