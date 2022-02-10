@@ -15,7 +15,7 @@ pub enum Expr {
     Typedef,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum RetExpr {}
 
 #[derive(Debug, Serialize, Deserialize, new)]
@@ -27,7 +27,7 @@ pub struct Init {
     pub context: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, new)]
+#[derive(Debug, Serialize, Deserialize, Clone, new)]
 pub enum Value {
     Int(i64),
     Num(f64),
@@ -38,15 +38,17 @@ pub enum Value {
     Struct(Vec<(String, Value)>),
     TupleAccess {
         name: String,
-        access_type: TupleAccessType,
+        access_mode: TupleAccessMode,
         name_range: Range<usize>,
         access_range: Range<usize>,
     },
     List(Vec<Value>),
     ListAccess {
         name: String,
-        access_type: ListAccessType,
-        range: Range<usize>
+        access_mode: ListAccessMode,
+        access_type: Type,
+        name_range: Range<usize>,
+        access_range: Range<usize>
     },
     Dict(Vec<(Value, Value)>),
     Var {
@@ -62,7 +64,7 @@ pub enum Value {
     Err
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Bool {
     Primitive(bool),
     Cmp(Cmp),
@@ -74,22 +76,22 @@ pub struct Call {
     pub args: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum TupleAccessType {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum TupleAccessMode {
     Member(String),
     Index(usize),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum ListAccessType {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ListAccessMode {
     List(usize),
     Dict(Box<Value>),
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Op {}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Cmp {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialOrd, Eq, Ord)]

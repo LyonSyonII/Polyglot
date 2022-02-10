@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use clap::Parser as P;
 use inner::inner;
 use pest::iterators::{Pair, Pairs};
@@ -123,10 +122,10 @@ fn parse_value(value: &nodes::Value, scope: &mut Scope) -> Value {
         }),
         nodes::ValueChildren::TupleAccess(ta) => Value::TupleAccess {
             name: ta.get_Name().text().into(),
-            access_type: match ta.get_TupleAccessType().to_enum() {
-                nodes::TupleAccessTypeChildren::Name(n) => TupleAccessType::Member(n.text().into()),
+            access_mode: match ta.get_TupleAccessType().to_enum() {
+                nodes::TupleAccessTypeChildren::Name(n) => TupleAccessMode::Member(n.text().into()),
                 nodes::TupleAccessTypeChildren::Index(i) => {
-                    TupleAccessType::Index(i.text().parse().unwrap())
+                    TupleAccessMode::Index(i.text().parse().unwrap())
                 }
             },
             name_range: ta.get_Name().range(),
@@ -138,7 +137,53 @@ fn parse_value(value: &nodes::Value, scope: &mut Scope) -> Value {
                 .collect::<Vec<Value>>(),
         ),
         // TODO! Check if list is a List or a Dict and access it properly
-        nodes::ValueChildren::ListAccess(_) => todo!(),
+        nodes::ValueChildren::ListAccess(la) => {
+            let name = la.get_Name().text().into();
+            let name_range = la.get_Name().range();
+            let access_range = {
+                let range = la.get_Value().range();
+                range.start-1..range.end+1
+            };
+            let list_type = if let Some(t) = scope.get(&name).cloned() {
+                t
+            } else {
+                return printerr(&name_range, "accessed invalid list/dictionary", "list/dictionary does not exist", scope).value_err()
+            };
+            
+            let (access_type, access_mode) = match list_type {
+                Type::List(list) => {
+                    (*list,
+                        match la.get_Value().to_enum() {
+                        nodes::ValueChildren::Int(i) => ListAccessMode::List(
+                            if let Ok(i) = i.text().parse() {
+                                i
+                            } else {
+                                return printerr(&access_range, "negative index", "index is negative, lists can only be accessed with positive numbers", scope).value_err()
+                            }),
+                        _ => return printerr(&access_range, "accessing list as a dictionary", format!("use the index of the element you want to access instead: {name}[0]"), scope).value_err()
+                    })
+                },
+                Type::Dict(dict) => {
+                    let value = parse_value(&la.get_Value(), scope);
+                    let value_type = parse_type_from_value(&value, scope);
+                    if dict.0 != value_type {
+                        return printerr(&access_range, "wrong access type", format!("expected {} found {}", dict.0, value_type), scope).value_err()
+                    } else {
+                        (dict.1, ListAccessMode::Dict(Box::new(value)))
+                    }
+                },
+                Type::Custom(_) => todo!(),
+                _ => return printerr(&name_range, "variable exists but is not a list/dictionary", "not a list/dictionary", scope).value_err()
+            };
+           
+            Value::ListAccess {
+                name,
+                access_type,
+                access_mode,
+                name_range,
+                access_range
+            }
+        },
         nodes::ValueChildren::Dict(d) => Value::Dict(
             d.list_DictPair()
                 .map(|pair| {
@@ -202,7 +247,7 @@ fn parse_type_from_value(value: &Value, scope: &mut Scope) -> Type {
         ),
         Value::Struct(members) => Type::Struct(
             members
-                .into_iter()
+                .iter()
                 .map(|mem| (mem.0.clone(), parse_type_from_value(&mem.1, scope)))
                 .collect()
         ),
@@ -215,20 +260,19 @@ fn parse_type_from_value(value: &Value, scope: &mut Scope) -> Type {
             if let Some(var_t) = scope.get(name).cloned() {
                 var_t
             } else {
-                printerr(range, &format!("variable '{name}' does not exist"), "not declared", scope);
-                Type::Err
+                printerr(range, &format!("variable '{name}' does not exist"), "not declared", scope).type_err()
             }
         }
-        Value::TupleAccess { name, access_type, name_range, access_range} => {
-            let tuple_type = scope.get(name).unwrap_or(&Type::Err).clone();
-            if tuple_type == Type::Err {
-                printerr(name_range, "accessed invalid tuple/struct", "struct does not exist", scope);
-                return tuple_type
-            }
+        Value::TupleAccess { name, access_mode: access_type, name_range, access_range} => {
+            let tuple_type = if let Some(ty) = scope.get_mut(name){
+                ty
+            } else {
+                return printerr(name_range, "accessed invalid tuple/struct", "struct does not exist", scope).type_err()
+            };
             
             match access_type {
-                TupleAccessType::Member(member) => {
-                    let mut struct_t = inner!(tuple_type, if Type::Struct, else { return printerr(access_range, "accessed tuple by member name", format!("use index instead: {name}.0"), scope).type_err() });
+                TupleAccessMode::Member(member) => {
+                    let struct_t = inner!(tuple_type, if Type::Struct, else { return printerr(access_range, "accessed tuple by member name", format!("use index instead: {name}.0"), scope).type_err() });
                     struct_t.sort_unstable();
                     if let Ok(ty) = struct_t.binary_search_by_key(&member, |(a, _)| a) {
                         struct_t[ty].1.clone()
@@ -237,7 +281,7 @@ fn parse_type_from_value(value: &Value, scope: &mut Scope) -> Type {
                         Type::Err
                     }
                 }
-                TupleAccessType::Index(index) => {
+                TupleAccessMode::Index(index) => {
                     let tuple_t = inner!(tuple_type, if Type::Tuple, else { return printerr(access_range, "accessed struct by index", format!("use member name instead: {name}.member"), scope).type_err()});
                     if let Some(ty) = tuple_t.get(*index) {
                         ty.clone()
@@ -254,8 +298,8 @@ fn parse_type_from_value(value: &Value, scope: &mut Scope) -> Type {
                 }
             }
         }
-        Value::ListAccess { name, access_type, range } => {
-            todo!()
+        Value::ListAccess { access_type, ..} => {
+            access_type.clone()
         }
         // TODO! Complex values
         Value::Op(_) => todo!(),

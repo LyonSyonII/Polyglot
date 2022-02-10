@@ -1,31 +1,14 @@
 ---
 - Init:
-    name: tuple
+    name: list
     type:
-      Struct:
-        - - name
-          - Str
-        - - cordiceps
-          - Int
+      List: Int
     value:
-      Struct:
-        - - name
-          - Str: a
-        - - cordiceps
-          - Int: 5
-    context: "var tuple = (name: \"a\", cordiceps: 5)"
+      List:
+        - Int: 2
+    context: "var list = [2]"
 - Init:
-    name: access
+    name: wrong
     type: Err
-    value:
-      TupleAccess:
-        name: tuple
-        access_type:
-          Member: nam
-        name_range:
-          start: 51
-          end: 56
-        access_range:
-          start: 56
-          end: 60
-    context: var access = tuple.nam
+    value: Err
+    context: "var wrong = list[-1]"
