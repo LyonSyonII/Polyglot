@@ -1,0 +1,2 @@
+var tuple = (name: "a", cordiceps: 5)
+var access = tuple.name

@@ -1,0 +1,15 @@
+[package]
+name = "polyglot_parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+pest = "2.1.0"
+pest_derive = "2.1.0"
+pest-typed-tree = "0.2.1"
+clap = { version = "3.0.14", features = ["derive"] }
+serde = { version = "1.0.136", features = ["derive"] }
+serde_yaml = "0.8.23"
+derive-new = "0.5.9"
+inner = "0.1.1"
+show-my-errors = "0.1.3"
