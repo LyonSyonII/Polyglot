@@ -112,12 +112,12 @@ To access a specific element on a list, use [index].
     
     var list = ["hello", "world"]
     print(list[1])                  
-    // output -> "world"
+    // Output: "world"
 
 If an out-of-bounds error is detected (trying to access an element that isn't there) the program will be terminated at runtime.
     
     print(list[2])                  
-    // output -> ERROR: Out-of-bounds in line X, "list[2]".
+    // Output: ERROR: Out-of-bounds in line X, "list[2]".
 
 You can define the starting size of a list.
     
@@ -128,11 +128,27 @@ Dictionaries act like lists, but instead of using the index of insertion to acce
     
     var dictionary = [ "true" -> true, "false" -> false ]
     print(dictionary["true"])
-    // output -> true
+    // Output: true
 
 To declare an empty dictionary you must annotate its types explicitely
     
     var dictionary: [str -> bool]
+
+You can access the keys or the values of a dictionary independently, and are treated as lists
+
+    var dictionary = [1 -> "one", 2 -> "two", 3 -> "three"]
+    
+    var keys = dictionary.keys
+    // keys = [1, 2, 3]
+    
+    var values = dictionary.values
+    // values = ["one", "two", "three"]
+
+Note that any changes on the resulting lists will not be reflected on the dictionary, so you need to reassign them to it.  
+To do that, you need to create a new dictionary specifying the keys and values, see [type conversions](#type-conversions) for more info.
+    
+    keys[0] = 5
+    dictionary = [int -> str](keys, values)
 
 > Depending on the flavor of Polyglot you're using, the implementation of the Dictionaries will change drastically, so don't assume constant lookup.  
 > If the language in question has a native dictionary, then it will be used.
@@ -432,42 +448,56 @@ All branches must return values of the same type, as a variable cannot be of mul
 ### Built-in functions
 #### Type conversions
 Type conversions are used to transform a type into another.  
-All conversions are structured as `end_type(value)`
-Not all conversions are valid, and some will throw a runtime error.
+All conversions are structured as `end_type(value)`.  
+Not all conversions are valid, and some will throw a runtime error.  
     
     var number = 682
     var string = str(number)
     // string = "682"
 
-The inverse process is also valid
+The inverse process is also valid.
     
     var string = "682"
     var number = int(string)
     // number = 682
 
-But converting a string that isn't a number will fail
-
+But converting a string that isn't a number will fail.
+    
     var string = "hey!"
     var number = int(string)
     // ERROR: "hey!" can not be parsed into an int
 
-Conversions can also be applied to lists/dictionaries
-
+Conversions can also be applied to lists/dictionaries.
+    
     var bool_list = [true, false, false, true]
     var int_list = int(bool_list)
     // int_list = [1, 0, 0, 1]
-
+    
     var dict: [int -> bool] = [5 -> true, -8 -> false]
     var str_dict: [str -> str] = str(dict)
     // str_dict = ["5" -> "true", "-8" -> false]
     
-
-    // You can also specify if you want to convert the keys or the values
-    keys_dict = str(dict, keys)
-    // str_dict = ["5" -> true, "-8" -> false]
     
-    values_dict = str(dict, values)
+    // You can also specify if you want to convert the keys or the values
+    keys_dict = str(dict.keys)
+    // keys_dict = ["5" -> true, "-8" -> false]
+    
+    values_dict = str(dict.values)
     // values_dict = [5 -> "true", -8 -> "false"]
+
+You can also use conversions to create new dictionaries from two lists.
+    
+    var strings = ["one", "two", "three"]
+    var ints = [1, 2, 3]
+    var new_dict = [str -> int](strings, ints)
+    // new_dict = ["one" -> 1, "two" -> 2, "three" -> 3]
+
+Be aware that if the lists are of different lenghts the remaining elements will not be added.
+
+    var strings = ["one", "two"]
+    var ints = [1, 2, 3, 4]
+    var new_dict = [str -> int](strings, ints)
+    // new_dict = ["one" -> 1, "two" -> 2]
 
 #### Print
 Prints the contents of a variable to the terminal.
@@ -483,4 +513,8 @@ You can operate inside the print argument (useful for concatenating strings).
     // Output: "a is equal to 5"
 
 #### Dbg
-You can use it to quickly debug some value
+You can use it to quickly debug some variable.
+    
+    var thing = 56 
+    dbg(thing)
+    // Output: "thing = 56"
