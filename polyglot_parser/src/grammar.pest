@@ -1,4 +1,4 @@
-Main = { NOTHING ~ Expr* ~ NOTHING }
+Main = { NOOTHING ~ Expr* ~ NOTHING }
 
 // Character rules
 NOTHING = _{ "" }

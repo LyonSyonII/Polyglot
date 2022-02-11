@@ -23,7 +23,7 @@ If a variable is not initialized, the type must be annotated explicitely.
     var string: str
     var tuple: (str, int)
 
-### Named Tuples (Structs)
+### Structs (Named Tuples)
 Structs are basically enhanced tuples with member names.
     
     var person = (age: 52, name: "Alex")
@@ -59,9 +59,17 @@ Names will be treated as aliases for the real value.
     // a = "true"
 
 You can use these names to check for conditions.
-
+    
     if a = StrBool.T => print("a is true")
     else             => print("a is false")
+
+Enums can also be declared as only named (without value).
+    
+    type Bool = true | false
+
+And you can assign them as a value.
+
+    var a = Bool.true
 
 Or [match](#match) each value
 
@@ -171,12 +179,7 @@ If all the conditions above are false, execute the code inside the `else`.
          // other things
     end
 
-The "end" keyword can be omitted when only one expression is inside the if/elseif/else.
-Also, in this case one-liners are supported, using "=>" next to the condition.
-    
-    // Omit "end"    
-    if condition
-        // something
+One-liners are supported by using the `=>` operator next to the condition.
     
     // One-liners
     if condition    => // something
@@ -321,9 +324,10 @@ Tuples can be destructured when passed as args, so a more idiomatic way to write
 
 ### Generics
 #### Type defined generics
-You can use generics to define functions for multiple types at the same time.
+You can use generics to define functions for multiple types at the same time.  
+This can be acomplished by creating an enum over types.  
     
-    type Addable = int | num | str | char
+    gen Addable = int | num | str | char
     fn add(a: Addable, b: Addable): Addable
         a + b
     end
@@ -370,7 +374,7 @@ The above function would be transpiled into:
         a + b
     end
 
-So avoid using generic enums for a lot of types, as the number of implementations will increase a lot.  
+So avoid using generic enums for a lot of types/arguments, as the number of implementations will increase a lot.  
 [Type defined generics](#type-defined-generics) are much preferred, as they only generate one implementation per type used.
 
 ### Expressions

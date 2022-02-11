@@ -89,7 +89,14 @@ pub enum ListAccessMode {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Op {}
+pub enum Op {
+    Add(Box<(Value, Value)>),
+    Sub(Box<(Value, Value)>),
+    Mul(Box<(Value, Value)>),
+    Div(Box<(Value, Value)>),
+    Mod(Box<(Value, Value)>),
+    Pow(Box<(Value, Value)>),
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Cmp {}
