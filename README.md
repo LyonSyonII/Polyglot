@@ -238,6 +238,7 @@ You can match against multiple values.
     end
 
 ### Functions
+If a function does take any argument, parenthesis can be skipped.  
 Indentation is not necessary, but it is strongly recommended.
     
     fn void
@@ -247,14 +248,19 @@ Indentation is not necessary, but it is strongly recommended.
     fn void_args(a: int, b: num, ...)
         // something
     end
+
+Then to call it (note that the parenthesis can not be skipped here)
+
+    void()
+    void_args(5, 6)
     
 To return something from a function you need to anotate it with the return type.
 
-    fn function: int
+    fn return_no_args: int
         67
     end
     
-    fn return_args_fn(a: int, b: num, ...): string
+    fn return_args(a: int, b: num, ...): string
         // something
         "hello"
     end
@@ -297,6 +303,54 @@ Tuples can be destructured when passed as args, so a more idiomatic way to write
     tuple = (89, 99.99, 'z')
     tuple_idiomatic_args(tuple)
 
+### Generics
+You can use generics to define functions for multiple types at the same time.
+    
+    type Addable = int | num | str | char
+    fn add(a: Addable, b: Addable): Addable
+        a + b
+    end
+    
+    add(5, 6)
+    // Return: 11
+    
+    add("5", "6")
+    // Return: "56"
+
+Note that all args of `add` must be of the same type, as `Addable` is defined with the first argument.  
+If you want to define an implementation for all the possible combinations of the types, use the enum as the type of the arguments.
+
+    fn add(a: int|str, b: int|str): str
+        a + b
+    end
+
+    add(5, 6)
+    // Return: "11" (note that it is a string now)
+
+    add("Numbers: ", 88))
+    // Return: "Numbers: 88"
+
+The return type must be defined (it cannot be generic), as you need to ensure what you're doing is legal (you cannot add two `str` and return an `int`)  
+
+Generics are just syntactic sugar for monomorphisation, the compiler will create an implementation for each type used.
+The above function would be transpiled into
+
+    fn add_int(a: int, b: int): str
+        str(a + b)
+    end
+    
+    fn add_str(a: str, b: str): str
+        a + b
+    end
+    
+    fn add_int_str(a: int, b: str): str
+        a + b
+    end
+
+    fn add_str_int(a: str, b: int): str
+        a + b
+    end
+
 ### Expressions
 If/elif/else/match are expressions for Polyglot, meaning that you can assign them to variables.
 If you're familiar with the Rust programming language, the behaviour is the same.
@@ -304,13 +358,13 @@ If you're familiar with the Rust programming language, the behaviour is the same
 	var str_bool = "true"
 	var parsed_bool: bool = 	
 		match
-		    "true" => true
+		    "true"  => true
 		    "false" => false
 		end
 
-	// In this case parsed_bool = true
+	// parsed_bool = true
 
-It is important to note that all branches must return values of the same type, as a variable cannot be of multiple types.
+All branches must return values of the same type, as a variable cannot be of multiple types.
 
 ### Basic operations
     var number = 10
@@ -346,7 +400,7 @@ It is important to note that all branches must return values of the same type, a
     ops = number ^ 15
     ops ^= 65
 
-### Comparations
+### Comparisons
 
     // Equal
     if a = b
