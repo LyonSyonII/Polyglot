@@ -304,6 +304,7 @@ Tuples can be destructured when passed as args, so a more idiomatic way to write
     tuple_idiomatic_args(tuple)
 
 ### Generics
+#### Type defined generics
 You can use generics to define functions for multiple types at the same time.
     
     type Addable = int | num | str | char
@@ -317,8 +318,10 @@ You can use generics to define functions for multiple types at the same time.
     add("5", "6")
     // Return: "56"
 
-Note that all args of `add` must be of the same type, as `Addable` is defined with the first argument.  
-If you want to define an implementation for all the possible combinations of the types, use the enum as the type of the arguments.
+Note that all args of `add` must be of the same type, as `Addable`'s type is defined with the first argument.  
+
+#### Enum defined generics
+If you want to define an implementation for all the possible combinations of types, use an enum as the type of the arguments.
 
     fn add(a: int|str, b: int|str): str
         a + b
@@ -330,16 +333,16 @@ If you want to define an implementation for all the possible combinations of the
     add("Numbers: ", 88))
     // Return: "Numbers: 88"
 
-The return type must be defined (it cannot be generic), as you need to ensure what you're doing is legal (you cannot add two `str` and return an `int`)  
+The return type must be defined (it cannot be generic), as you need to ensure what you're doing is legal (you cannot add two `str` and return an `int`).
 
-Generics are just syntactic sugar for monomorphisation, the compiler will create an implementation for each type used.
-The above function would be transpiled into
+Generics are just syntactic sugar for monomorphisation, the compiler will create an implementation for each type used.  
+The above function would be transpiled into:
 
-    fn add_int(a: int, b: int): str
+    fn add_int_int(a: int, b: int): str
         str(a + b)
     end
     
-    fn add_str(a: str, b: str): str
+    fn add_str_str(a: str, b: str): str
         a + b
     end
     
@@ -350,6 +353,9 @@ The above function would be transpiled into
     fn add_str_int(a: str, b: int): str
         a + b
     end
+
+So avoid using generic enums for a lot of types, as the number of implementations will increase a lot.  
+[Type defined generics](#type-defined-generics) are much preferred, as they only generate one implementation per type used.
 
 ### Expressions
 If/elif/else/match are expressions for Polyglot, meaning that you can assign them to variables.
@@ -422,3 +428,59 @@ All branches must return values of the same type, as a variable cannot be of mul
 
     // Negation
     if !a
+
+### Built-in functions
+#### Type conversions
+Type conversions are used to transform a type into another.  
+All conversions are structured as `end_type(value)`
+Not all conversions are valid, and some will throw a runtime error.
+    
+    var number = 682
+    var string = str(number)
+    // string = "682"
+
+The inverse process is also valid
+    
+    var string = "682"
+    var number = int(string)
+    // number = 682
+
+But converting a string that isn't a number will fail
+
+    var string = "hey!"
+    var number = int(string)
+    // ERROR: "hey!" can not be parsed into an int
+
+Conversions can also be applied to lists/dictionaries
+
+    var bool_list = [true, false, false, true]
+    var int_list = int(bool_list)
+    // int_list = [1, 0, 0, 1]
+
+    var dict: [int -> bool] = [5 -> true, -8 -> false]
+    var str_dict: [str -> str] = str(dict)
+    // str_dict = ["5" -> "true", "-8" -> false]
+    
+
+    // You can also specify if you want to convert the keys or the values
+    keys_dict = str(dict, keys)
+    // str_dict = ["5" -> true, "-8" -> false]
+    
+    values_dict = str(dict, values)
+    // values_dict = [5 -> "true", -8 -> "false"]
+
+#### Print
+Prints the contents of a variable to the terminal.
+    
+    var a = 5
+    print(a)
+    // Output: 5
+
+You can operate inside the print argument (useful for concatenating strings).
+
+    var a = 5
+    print("a is equal to" + a)
+    // Output: "a is equal to 5"
+
+#### Dbg
+You can use it to quickly debug some value
