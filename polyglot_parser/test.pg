@@ -1,2 +1,2 @@
-var list = [2]
-var wrong = list[-1]
+var a = 5
+var b = a + 5

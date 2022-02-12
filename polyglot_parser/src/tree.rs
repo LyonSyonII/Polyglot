@@ -255,6 +255,27 @@ impl GetRange for crate::nodes::TupleAccessType<'_> {
     }
 }
 
+pub trait ToValue {
+    fn to_value(&self) -> crate::nodes::Value<'_>;
+}
+
+impl ToValue for crate::nodes::Lhs<'_> {
+    fn to_value(&self) -> crate::nodes::Value<'_> {
+        match self.to_enum() {
+            crate::nodes::LhsChildren::Name(name) => crate::nodes::Value::new(name.pairs().next().unwrap()),
+            crate::nodes::LhsChildren::Call(_) => todo!(),
+            crate::nodes::LhsChildren::Int(_) => todo!(),
+            crate::nodes::LhsChildren::Struct(_) => todo!(),
+            crate::nodes::LhsChildren::Tuple(_) => todo!(),
+            crate::nodes::LhsChildren::Str(_) => todo!(),
+            crate::nodes::LhsChildren::Char(_) => todo!(),
+            crate::nodes::LhsChildren::Bool(_) => todo!(),
+            crate::nodes::LhsChildren::TupleAccess(_) => todo!(),
+            crate::nodes::LhsChildren::Num(_) => todo!(),
+        }
+    }
+}
+
 
 
 

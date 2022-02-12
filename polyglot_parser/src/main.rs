@@ -1,3 +1,6 @@
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+
 use clap::Parser as P;
 use inner::inner;
 use pest::iterators::{Pair, Pairs};
@@ -7,6 +10,8 @@ use serde::{Deserialize, Serialize, Serializer};
 mod tree;
 use show_my_errors::{AnnotationList, Stylesheet};
 use tree::*;
+
+
 
 // TODO! Check all values on list and dictionary too see if all have the same type
 
@@ -199,7 +204,20 @@ fn parse_value(value: &nodes::Value, scope: &mut Scope) -> Value {
         // TODO! Complex values
 
         // TODO! Check if both values are of the same type
-        nodes::ValueChildren::Op(op) => Value::Op(),
+        nodes::ValueChildren::Op(op) => Value::Op(
+            match op.to_enum() {
+                nodes::OpChildren::Add(a) => Op::Add(
+                    Box::new((
+                    parse_value(&a.get_Lhs().to_value(), scope), 
+                    parse_value(a.get_Rhs(), scope)
+                ))),
+                nodes::OpChildren::Sub(s) => todo!(),
+                nodes::OpChildren::Mul(mul) => todo!(),
+                nodes::OpChildren::Div(d) => todo!(),
+                nodes::OpChildren::Mod(m) => todo!(),
+                nodes::OpChildren::Pow(p) => todo!(),
+            }
+        ),
         nodes::ValueChildren::RetExpr(_) => todo!(),
         nodes::ValueChildren::Call(_) => todo!(),
     }
