@@ -1,26 +1,6 @@
 ---
-- Init:
+- Decl:
     name: a
     type: Int
-    value:
-      Int: 5
-    context: var a = 5
-- Init:
-    name: b
-    type: Int
-    value:
-      Op:
-        Add:
-          - Var:
-              name: a
-              range:
-                start: 18
-                end: 19
-          - Op:
-              Add:
-                - Int: 5
-                - Op:
-                    Add:
-                      - Int: 85
-                      - Num: 58.5
-    context: var b = a + 5 + 85 + 58.5
+    context: "var a: int"
+- Err

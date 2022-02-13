@@ -16,9 +16,18 @@ pub enum Expr {
         value: Value,
         context: String
     },
-    Decl,
-    Assig,
+    Decl {
+        name: String,
+        r#type: Type,
+        context: String,
+    },
+    Assig {
+        name: String,
+        value: Value,
+        context: String
+    },
     Typedef,
+    Err,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
