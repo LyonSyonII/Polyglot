@@ -32,7 +32,7 @@ ModAssig = { Name ~ "%=" ~ Value }
 // Complex values
 Name = @{ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
-Value = { Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | RetExpr }
+Value = { Op | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | RetExpr }
 Call = { Name ~ "(" ~ Args? ~ ")" }
 Args = { Value ~ ("," ~ Value)* }
 
@@ -55,18 +55,19 @@ DictPair = { Value ~ "->" ~ Value }
 Dict = { "[" ~ DictPair ~ ("," ~ DictPair)* ~ "]" }
 
 // Recursives
-Lhs = { Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name }
-Rhs = { Op | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | Call | Name }
+Lhs = { Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | RetExpr }
 Op = { Add | Sub | Mul | Div | Mod | Pow }
 
-Add = { Lhs ~ "+" ~ Rhs }
-Sub = { Lhs ~ "-" ~ Rhs }
-Mul = { Lhs ~ "/" ~ Rhs }
-Div = { Lhs ~ "/" ~ Rhs }
-Mod = { Lhs ~ "%" ~ Rhs }
-Pow = { Lhs ~ "^" ~ Rhs }
+Add = { Lhs ~ "+" ~ Value }
+Sub = { Lhs ~ "-" ~ Value }
+Mul = { Lhs ~ "*" ~ Value }
+Div = { Lhs ~ "/" ~ Value }
+Mod = { Lhs ~ "%" ~ Value }
+Pow = { Lhs ~ "^" ~ Value }
 
 Cmp = { "not_implemented" }
+
+Parenthesis = { "(" ~ Value ~ ")" }
 
 // Types
 Type = { TInt | TNum | TBool | TChar | TStr | TTuple | TStruct | TList | TDict | TCustom }

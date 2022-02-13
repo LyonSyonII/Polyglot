@@ -1,14 +1,26 @@
 ---
 - Init:
-    name: list
-    type:
-      List: Int
+    name: a
+    type: Int
     value:
-      List:
-        - Int: 2
-    context: "var list = [2]"
+      Int: 5
+    context: var a = 5
 - Init:
-    name: wrong
-    type: Err
-    value: Err
-    context: "var wrong = list[-1]"
+    name: b
+    type: Int
+    value:
+      Op:
+        Add:
+          - Var:
+              name: a
+              range:
+                start: 18
+                end: 19
+          - Op:
+              Add:
+                - Int: 5
+                - Op:
+                    Add:
+                      - Int: 85
+                      - Num: 58.5
+    context: var b = a + 5 + 85 + 58.5

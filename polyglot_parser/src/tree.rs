@@ -1,21 +1,27 @@
+#![allow(unused_imports)]
+#![allow(unused_variables)]
+
 use std::{ops::{Add, Range}, path::PathBuf};
-
-
 use derive_new::new;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, new)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, new)]
 pub struct Main(pub Vec<Expr>);
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum Expr {
-    Init(Box<Init>),
+    Init {
+        name: String,
+        r#type: Type,
+        value: Value,
+        context: String
+    },
     Decl,
     Assig,
     Typedef,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum RetExpr {}
 
 #[derive(Debug, Serialize, Deserialize, new)]
@@ -27,7 +33,7 @@ pub struct Init {
     pub context: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, new)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, new)]
 pub enum Value {
     Int(i64),
     Num(f64),
@@ -56,6 +62,7 @@ pub enum Value {
         range: Range<usize>,
     },
     Op(Op),
+    Parenthesis(Box<Value>),
     Call {
         name: String,
         args: Vec<String>,
@@ -64,31 +71,31 @@ pub enum Value {
     Err
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Bool {
     Primitive(bool),
     Cmp(Cmp),
 }
 
-#[derive(Debug, Serialize, Deserialize, new)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, new)]
 pub struct Call {
     pub name: String,
     pub args: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum TupleAccessMode {
     Member(String),
     Index(usize),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum ListAccessMode {
     List(usize),
     Dict(Box<Value>),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum Op {
     Add(Box<(Value, Value)>),
     Sub(Box<(Value, Value)>),
@@ -98,7 +105,7 @@ pub enum Op {
     Pow(Box<(Value, Value)>),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum Cmp {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialOrd, Eq, Ord)]
@@ -132,7 +139,7 @@ impl PartialEq for Type {
             (Self::Struct(l0), Self::Struct(r0)) => l0 == r0,
             (Self::Custom(l0), Self::Custom(r0)) => l0 == r0,
             (Self::Struct(l0), Self::Tuple(r0)) => {
-                for (l0, r0) in l0.into_iter().zip(r0) {
+                for (l0, r0) in l0.iter().zip(r0) {
                     if l0.1 != *r0 {
                         return false;
                     }
@@ -220,63 +227,6 @@ impl std::ops::DerefMut for Scope {
         &mut self.vars
     }
 }
-
-pub trait GetRange {
-    fn range(&self) -> std::ops::Range<usize>;
-}
-
-impl GetRange for crate::nodes::Value<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
-    }
-}
-
-impl GetRange for crate::nodes::Type<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
-    }
-}
-
-impl GetRange for crate::nodes::Name<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
-    }
-}
-
-impl GetRange for crate::nodes::TupleAccess<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
-    }
-}
-
-impl GetRange for crate::nodes::TupleAccessType<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()-1..self.span().end()
-    }
-}
-
-pub trait ToValue {
-    fn to_value(&self) -> crate::nodes::Value<'_>;
-}
-
-impl ToValue for crate::nodes::Lhs<'_> {
-    fn to_value(&self) -> crate::nodes::Value<'_> {
-        match self.to_enum() {
-            crate::nodes::LhsChildren::Name(name) => crate::nodes::Value::new(name.pairs().next().unwrap()),
-            crate::nodes::LhsChildren::Call(_) => todo!(),
-            crate::nodes::LhsChildren::Int(_) => todo!(),
-            crate::nodes::LhsChildren::Struct(_) => todo!(),
-            crate::nodes::LhsChildren::Tuple(_) => todo!(),
-            crate::nodes::LhsChildren::Str(_) => todo!(),
-            crate::nodes::LhsChildren::Char(_) => todo!(),
-            crate::nodes::LhsChildren::Bool(_) => todo!(),
-            crate::nodes::LhsChildren::TupleAccess(_) => todo!(),
-            crate::nodes::LhsChildren::Num(_) => todo!(),
-        }
-    }
-}
-
-
 
 
 
