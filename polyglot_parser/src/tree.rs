@@ -38,11 +38,10 @@ pub struct Init {
     pub name: String,
     pub r#type: Type,
     pub value: Value,
-    //pub line_num: usize,
     pub context: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, new)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Value {
     Int(i64),
     Num(f64),
@@ -70,7 +69,10 @@ pub enum Value {
         name: String,
         range: Range<usize>,
     },
-    Op(Op),
+    Op {
+        op: Op,
+        range: Range<usize>,
+    },
     Parenthesis(Box<Value>),
     Call {
         name: String,
@@ -108,6 +110,7 @@ pub enum ListAccessMode {
 pub enum Op {
     Add(Box<(Value, Value)>),
     Sub(Box<(Value, Value)>),
+    ListRemoveAll(Box<(String, Value)>),
     Mul(Box<(Value, Value)>),
     Div(Box<(Value, Value)>),
     Mod(Box<(Value, Value)>),
@@ -135,9 +138,7 @@ pub enum Type {
 // CUSTOM DEFINED
 pub struct Scope {
     vars: std::collections::HashMap<String, Type>,
-    ctx: String,
     file: (String, PathBuf),
-    err: bool
 }
 
 // IMPLS
@@ -169,8 +170,24 @@ impl std::fmt::Display for Type {
             Type::Bool => write!(f, "bool"),
             Type::Char => write!(f, "char"),
             Type::Str => write!(f, "str"),
-            Type::Tuple(t) => todo!(),
-            Type::Struct(_) => todo!(),
+            Type::Tuple(t) => {
+                let mut t = t.iter();
+                write!(f, "({}", t.next().unwrap()).unwrap();
+                
+                for ty in t {
+                    write!(f, ", {}", ty).unwrap()
+                }
+                write!(f, ")")
+            },
+            Type::Struct(s) => {
+                let mut s = s.iter();
+                let next = s.next().unwrap();
+                write!(f, "({}: {}", next.0, next.1).unwrap();
+                for (name, ty) in s {
+                    write!(f, ", {name}: {ty}").unwrap()
+                }
+                write!(f, ")")
+            },
             Type::List(l) => write!(f, "[{l}]"),
             Type::Dict(d) => write!(f, "[{} -> {}]", d.0, d.1),
             Type::Custom(c) => write!(f, "{c}"),
@@ -188,38 +205,20 @@ impl Scope {
         
         Scope {
             vars: map,
-            ctx: String::new(),
             file: (String::new(), PathBuf::new()),
-            err: false,
         }
-    }
-    
-    pub fn change_ctx(&mut self, new: String) {
-        self.ctx = new;
-    }
-
-    pub fn ctx(&self) -> &str {
-        self.ctx.as_str()
     }
     
     pub fn set_file(&mut self, name: PathBuf, contents: String) {
         self.file = (contents, name);
     }
-
-    pub fn file(&self) -> &str {
+    
+    pub fn file_as_str(&self) -> &str {
         self.file.0.as_str()
     }
 
-    pub fn file_name(&self) -> &std::path::Path {
+    pub fn file_path(&self) -> &std::path::Path {
         self.file.1.as_path()
-    }
-
-    pub fn err(&mut self) {
-        self.err = true;
-    }
-    
-    pub fn err_found(&self) -> bool {
-        self.err
     }
 }
 
@@ -234,6 +233,24 @@ impl std::ops::Deref for Scope {
 impl std::ops::DerefMut for Scope {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.vars
+    }
+}
+
+pub trait OpUtils {
+    fn set_value(self, lhs: Value, rhs: Value) -> Op;
+}
+
+impl OpUtils for Op {
+    fn set_value(self, lhs: Value, rhs: Value) -> Op {
+        match self {
+            Op::Add(a) => Op::Add(Box::new((lhs, rhs))),
+            Op::Sub(a) => Op::Sub(Box::new((lhs, rhs))),
+            Op::Mul(a) => Op::Mul(Box::new((lhs, rhs))),
+            Op::Div(a) => Op::Div(Box::new((lhs, rhs))),
+            Op::Mod(a) => Op::Mod(Box::new((lhs, rhs))),
+            Op::Pow(a) => Op::Pow(Box::new((lhs, rhs))),
+            _ => unreachable!()
+        }
     }
 }
 

@@ -3,7 +3,6 @@ mod tree;
 use crate::parser::*;
 use clap::Parser;
 
-
 // TODO! Check all values on list and dictionary too see if all have the same type
 
 #[derive(clap::Parser)]

@@ -1,3 +1,2 @@
-var a: int
-
-a = 'c'
+var a = 5
+a -= 555

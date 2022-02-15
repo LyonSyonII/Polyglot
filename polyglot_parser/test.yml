@@ -1,6 +1,23 @@
 ---
-- Decl:
+- Init:
     name: a
     type: Int
-    context: "var a: int"
-- Err
+    value:
+      Int: 5
+    context: var a = 5
+- Assig:
+    name: a
+    value:
+      Op:
+        op:
+          Sub:
+            - Var:
+                name: a
+                range:
+                  start: 15
+                  end: 18
+            - Int: 555
+        range:
+          start: 15
+          end: 18
+    context: a -= 555
