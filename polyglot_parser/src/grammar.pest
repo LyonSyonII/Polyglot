@@ -3,6 +3,7 @@ Main = { NOTHING ~ Expr* ~ NOTHING }
 // Character rules
 NOTHING = _{ "" }
 WHITESPACE = _{ " " | "\t" | NEWLINE | COMMENT }
+SP = _{ WHITESPACE }
 NL = _{ NEWLINE }
 CM = @{ "," ~ WHITESPACE+ }
 CL = @{ ":" ~ WHITESPACE+ }
@@ -11,7 +12,7 @@ CL = @{ ":" ~ WHITESPACE+ }
 KW = _{ "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
 COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
-Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef) }
+Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | Fn) }
 RetExpr = { "if/elseif/else/match" }
 
 Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
@@ -19,6 +20,9 @@ Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
 Decl = { "var" ~ Name ~ ":" ~ Type }
 
 Typedef = { "type" ~ Name ~ "=" ~ Type }
+
+Fn = { "fn" ~ Name ~ ArgsDef? ~Expr* ~ "end" }
+ArgsDef = { "(" ~ (Name ~ ":" ~ Type ~ (", " ~ Name ~ ":" ~ Type)*)? ~ ")" }
 
 Assig = { Name ~ "=" ~ Value }
 AddAssig = { Name ~ "+=" ~ Value }
