@@ -1,39 +1,10 @@
 ---
-- Fn:
-    name: add
-    type: Int
-    args:
-      - - a
-        - Int
-      - - b
-        - Int
-    exprs:
-      - Init:
-          name: return
-          type: Int
-          value:
-            Op:
-              op:
-                Add:
-                  - Var:
-                      name: a
-                      range:
-                        start: 45
-                        end: 46
-                  - Var:
-                      name: b
-                      range:
-                        start: 49
-                        end: 50
-              range:
-                start: 45
-                end: 50
-          context: var return = a + b
-    context: "fn add(a: int, b: int): int\n    var return = a + b\nend"
-- Init:
-    name: a
-    type: Bool
-    value:
-      Bool:
-        Cmp: Err
-    context: "var a = (5 + 5) < \"a\""
+- Typedef:
+    name: Person
+    type:
+      Struct:
+        - - name
+          - Str
+        - - age
+          - Int
+- Err

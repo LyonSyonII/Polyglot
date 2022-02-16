@@ -26,6 +26,10 @@ pub enum Expr {
         value: Value,
         context: String
     },
+    Typedef {
+        name: String,
+        r#type: Type,
+    },
     Fn {
         name: String,
         r#type: Type,
@@ -41,14 +45,8 @@ pub enum Expr {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub enum RetExpr {}
+pub enum RetExpr {
 
-#[derive(Debug, Serialize, Deserialize, new)]
-pub struct Init {
-    pub name: String,
-    pub r#type: Type,
-    pub value: Value,
-    pub context: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]

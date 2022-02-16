@@ -1,7 +1,4 @@
-fn add(a: int, b: int): int
-    var return = a + b
-end
+type Person = (name: str, age: int)
 
 
-
-var a = (5 + 5) < "a"
+var alex: Person = ("Alex", "19")
