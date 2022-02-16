@@ -1,14 +1,14 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
-use std::{ops::{Add, Range}, path::PathBuf};
+use std::{collections::HashMap, ops::{Add, Range}, path::PathBuf};
 use derive_new::new;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, new)]
 pub struct Main(pub Vec<Expr>);
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum Expr {
     Init {
         name: String,
@@ -26,7 +26,17 @@ pub enum Expr {
         value: Value,
         context: String
     },
-    Typedef,
+    Fn {
+        name: String,
+        r#type: Type,
+        args: Vec<(String, Type)>,
+        exprs: Vec<Expr>,
+        context: String
+    },
+    Call {
+        name: String,
+        args: Vec<Value>,
+    },
     Err,
 }
 
@@ -76,7 +86,7 @@ pub enum Value {
     Parenthesis(Box<Value>),
     Call {
         name: String,
-        args: Vec<String>,
+        args: Vec<Value>,
     },
     RetExpr(RetExpr),
     Err
@@ -131,13 +141,22 @@ pub enum Type {
     Struct(Vec<(String, Type)>),
     List(Box<Type>),
     Dict(Box<(Type, Type)>),
+    Void,
     Custom(String),
     Err,
 }
 
 // CUSTOM DEFINED
+
+#[derive(Clone)]
+pub struct Fn {
+    pub r#type: Type,
+    pub args: Vec<Type>,
+}
+
 pub struct Scope {
     vars: std::collections::HashMap<String, Type>,
+    funcs: std::collections::HashMap<String, Fn>,
     file: (String, PathBuf),
 }
 
@@ -190,6 +209,7 @@ impl std::fmt::Display for Type {
             },
             Type::List(l) => write!(f, "[{l}]"),
             Type::Dict(d) => write!(f, "[{} -> {}]", d.0, d.1),
+            Type::Void => write!(f, "void"),
             Type::Custom(c) => write!(f, "{c}"),
             Type::Err => unreachable!()
         }
@@ -197,8 +217,8 @@ impl std::fmt::Display for Type {
 }
 
 impl Scope {
-    pub fn new(current_scope: Vec<(String, Type)>) -> Scope {
-        let mut map = std::collections::HashMap::with_capacity(current_scope.len());
+    pub fn new(current_scope: Vec<(String, Type)>, current_functions: HashMap<String, Fn>) -> Scope {
+        let mut map = HashMap::with_capacity(current_scope.len());
         for var in current_scope.into_iter() {
             map.insert(var.0, var.1);
         }
@@ -206,7 +226,27 @@ impl Scope {
         Scope {
             vars: map,
             file: (String::new(), PathBuf::new()),
+            funcs: current_functions
         }
+    }
+    
+    pub fn get_fn(&self, name: &str) -> Option<&Fn> {
+        self.funcs.get(name)
+    }
+
+    pub fn get_fn_type(&self, name: &str) -> Type {
+        if let Some(f) = self.get_fn(name) {
+            f.r#type.clone()
+        } else {
+            Type::Err
+        }
+    }
+    
+    pub fn insert_fn(&mut self, name: String, r#type: Type, args: &[(String, Type)]) -> bool {
+        let args = args.iter().map(|(name, ty)| {
+            ty.clone()
+        }).collect();
+        self.funcs.insert(name, Fn { r#type, args }).is_some()
     }
     
     pub fn set_file(&mut self, name: PathBuf, contents: String) {
@@ -219,6 +259,10 @@ impl Scope {
 
     pub fn file_path(&self) -> &std::path::Path {
         self.file.1.as_path()
+    }
+
+    pub fn clone_into_new_scope(&self, new_scope_variables: Vec<(String, Type)>) -> Scope {
+        Scope::new(new_scope_variables, self.funcs.clone())
     }
 }
 

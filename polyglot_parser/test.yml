@@ -1,23 +1,33 @@
 ---
-- Init:
-    name: a
+- Fn:
+    name: add
     type: Int
-    value:
-      Int: 5
-    context: var a = 5
-- Assig:
-    name: a
-    value:
-      Op:
-        op:
-          Sub:
-            - Var:
-                name: a
-                range:
-                  start: 15
-                  end: 18
-            - Int: 555
-        range:
-          start: 15
-          end: 18
-    context: a -= 555
+    args:
+      - - a
+        - Int
+      - - b
+        - Int
+    exprs:
+      - Init:
+          name: return
+          type: Int
+          value:
+            Op:
+              op:
+                Add:
+                  - Var:
+                      name: a
+                      range:
+                        start: 45
+                        end: 46
+                  - Var:
+                      name: b
+                      range:
+                        start: 49
+                        end: 50
+              range:
+                start: 45
+                end: 50
+          context: var return = a + b
+    context: "fn add(a: int, b: int): int\n    var return = a + b\nend"
+- Err

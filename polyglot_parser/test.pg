@@ -1,2 +1,7 @@
-var a = 5
-a -= 555
+fn add(a: int, b: int): int
+    var return = a + b
+end
+
+
+
+var a: int = add("a", 'b')

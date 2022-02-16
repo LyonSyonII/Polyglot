@@ -12,7 +12,7 @@ CL = @{ ":" ~ WHITESPACE+ }
 KW = _{ "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
 COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
-Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | Fn) }
+Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | Fn | Call) }
 RetExpr = { "if/elseif/else/match" }
 
 Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
@@ -21,7 +21,7 @@ Decl = { "var" ~ Name ~ ":" ~ Type }
 
 Typedef = { "type" ~ Name ~ "=" ~ Type }
 
-Fn = { "fn" ~ Name ~ ArgsDef? ~Expr* ~ "end" }
+Fn = { "fn" ~ Name ~ ArgsDef? ~ (":" ~ Type)? ~ Expr* ~ "end" }
 ArgsDef = { "(" ~ (Name ~ ":" ~ Type ~ (", " ~ Name ~ ":" ~ Type)*)? ~ ")" }
 
 Assig = { Name ~ "=" ~ Value }
@@ -37,8 +37,7 @@ ModAssig = { Name ~ "%=" ~ Value }
 Name = @{ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
 Value = { Op | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | RetExpr }
-Call = { Name ~ "(" ~ Args? ~ ")" }
-Args = { Value ~ ("," ~ Value)* }
+Call = { Name ~ "(" ~ (Value ~ ("," ~ Value)*)? ~ ")" }
 
 // Primitives
 Int = @{ "-"? ~ ASCII_DIGIT+ }
@@ -74,7 +73,7 @@ Cmp = { "not_implemented" }
 Parenthesis = { "(" ~ Value ~ ")" }
 
 // Types
-Type = { TInt | TNum | TBool | TChar | TStr | TTuple | TStruct | TList | TDict | TCustom }
+Type = { TInt | TNum | TBool | TChar | TStr | TTuple | TStruct | TList | TDict | TVoid | TCustom }
 TInt = { "int" }
 TNum = { "num" }
 TBool = { "bool" }
@@ -85,4 +84,8 @@ StructMem = { Name ~ ":" ~ Type }
 TStruct = { "(" ~ StructMem ~ ("," ~ StructMem)* ~ ")" }
 TList  = { "[" ~ Type ~ "]" }
 TDict = { "[" ~ Type ~ "->" ~ Type ~ "]" }
+TVoid = { "?#!#!#NOT_ACCESSIBLE#!#!#?" }
 TCustom = { (ASCII_ALPHA | "_")+ }
+
+// TODO! Add grammars for wrong syntax.
+// e.g. "var a", should annotate type "var a: TYPE"
