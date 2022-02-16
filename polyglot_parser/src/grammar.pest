@@ -36,13 +36,13 @@ ModAssig = { Name ~ "%=" ~ Value }
 // Complex values
 Name = @{ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
-Value = { Op | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | RetExpr }
+Value = { Op | Cmp | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | RetExpr }
 Call = { Name ~ "(" ~ (Value ~ ("," ~ Value)*)? ~ ")" }
 
 // Primitives
 Int = @{ "-"? ~ ASCII_DIGIT+ }
 Num = @{ "-"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT+ } 
-Bool = { "true" | "false" | Cmp }
+Bool = { "true" | "false" }
 Char = @{ "'" ~ ASCII_ALPHA ~ "'" }
 Str = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 
@@ -68,7 +68,14 @@ Div = { Lhs ~ "/" ~ Value }
 Mod = { Lhs ~ "%" ~ Value }
 Pow = { Lhs ~ "^" ~ Value }
 
-Cmp = { "not_implemented" }
+Cmp = { Less | Great | LessEq | GreatEq | Equal | NotEq | Not }
+Less = { Lhs ~ "<" ~ Value }
+Great = { Lhs ~ ">" ~ Value }
+LessEq = { Lhs ~ "<=" ~ Value }
+GreatEq = { Lhs ~ ">=" ~ Value }
+Equal = { Lhs ~ "=" ~ Value }
+NotEq = { Lhs ~ "!=" ~ Value }
+Not = { "!" ~ Lhs }
 
 Parenthesis = { "(" ~ Value ~ ")" }
 

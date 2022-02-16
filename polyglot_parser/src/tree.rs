@@ -83,6 +83,10 @@ pub enum Value {
         op: Op,
         range: Range<usize>,
     },
+    Cmp {
+        cmp: Cmp,
+        range: Range<usize>,
+    },
     Parenthesis(Box<Value>),
     Call {
         name: String,
@@ -128,7 +132,16 @@ pub enum Op {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub enum Cmp {}
+pub enum Cmp {
+    Less(Box<(Value, Value)>),
+    Greater(Box<(Value, Value)>),
+    LessEq(Box<(Value, Value)>),
+    GreatEq(Box<(Value, Value)>),
+    Equal(Box<(Value, Value)>),
+    NotEq(Box<(Value, Value)>),
+    Not(Box<Value>),
+    Err
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialOrd, Eq, Ord)]
 pub enum Type {

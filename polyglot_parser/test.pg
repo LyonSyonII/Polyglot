@@ -4,4 +4,4 @@ end
 
 
 
-var a: int = add("a", 'b')
+var a = (5 + 5) < "a"

@@ -30,4 +30,10 @@
                 end: 50
           context: var return = a + b
     context: "fn add(a: int, b: int): int\n    var return = a + b\nend"
-- Err
+- Init:
+    name: a
+    type: Bool
+    value:
+      Bool:
+        Cmp: Err
+    context: "var a = (5 + 5) < \"a\""
