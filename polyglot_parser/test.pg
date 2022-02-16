@@ -1,4 +1,6 @@
-type Person = (name: str, age: int)
+type Person = (str, int)
 
 
-var alex: Person = ("Alex", "19")
+var alex: Person = ("Alex", 19)
+var name = alex.1
+var age = alex.age

@@ -1,9 +1,13 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
-use std::{collections::HashMap, ops::{Add, Range}, path::PathBuf};
 use derive_new::new;
 use serde::{Deserialize, Serialize};
+use std::{
+    collections::HashMap,
+    ops::{Add, Range},
+    path::PathBuf,
+};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, new)]
 pub struct Main(pub Vec<Expr>);
@@ -14,7 +18,7 @@ pub enum Expr {
         name: String,
         r#type: Type,
         value: Value,
-        context: String
+        context: String,
     },
     Decl {
         name: String,
@@ -24,7 +28,7 @@ pub enum Expr {
     Assig {
         name: String,
         value: Value,
-        context: String
+        context: String,
     },
     Typedef {
         name: String,
@@ -35,7 +39,7 @@ pub enum Expr {
         r#type: Type,
         args: Vec<(String, Type)>,
         exprs: Vec<Expr>,
-        context: String
+        context: String,
     },
     Call {
         name: String,
@@ -45,9 +49,7 @@ pub enum Expr {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub enum RetExpr {
-
-}
+pub enum RetExpr {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Value {
@@ -70,7 +72,7 @@ pub enum Value {
         access_mode: ListAccessMode,
         access_type: Type,
         name_range: Range<usize>,
-        access_range: Range<usize>
+        access_range: Range<usize>,
     },
     Dict(Vec<(Value, Value)>),
     Var {
@@ -91,7 +93,7 @@ pub enum Value {
         args: Vec<Value>,
     },
     RetExpr(RetExpr),
-    Err
+    Err,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
@@ -138,7 +140,7 @@ pub enum Cmp {
     Equal(Box<(Value, Value)>),
     NotEq(Box<(Value, Value)>),
     Not(Box<Value>),
-    Err
+    Err,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialOrd, Eq, Ord)]
@@ -203,12 +205,12 @@ impl std::fmt::Display for Type {
             Type::Tuple(t) => {
                 let mut t = t.iter();
                 write!(f, "({}", t.next().unwrap()).unwrap();
-                
+
                 for ty in t {
                     write!(f, ", {}", ty).unwrap()
                 }
                 write!(f, ")")
-            },
+            }
             Type::Struct(s) => {
                 let mut s = s.iter();
                 let next = s.next().unwrap();
@@ -217,12 +219,12 @@ impl std::fmt::Display for Type {
                     write!(f, ", {name}: {ty}").unwrap()
                 }
                 write!(f, ")")
-            },
+            }
             Type::List(l) => write!(f, "[{l}]"),
             Type::Dict(d) => write!(f, "[{} -> {}]", d.0, d.1),
             Type::Void => write!(f, "void"),
             Type::Custom(c) => write!(f, "{c}"),
-            Type::Err => unreachable!()
+            Type::Err => unreachable!(),
         }
     }
 }
@@ -233,14 +235,14 @@ impl Scope {
         for var in current_scope.into_iter() {
             map.insert(var.0, var.1);
         }
-        
+
         Scope {
             vars: map,
             file: (String::new(), PathBuf::new()),
-            funcs: current_functions
+            funcs: current_functions,
         }
     }
-    
+
     pub fn get_fn(&self, name: &str) -> Option<&Fn> {
         self.funcs.get(name)
     }
@@ -252,18 +254,16 @@ impl Scope {
             Type::Err
         }
     }
-    
+
     pub fn insert_fn(&mut self, name: String, r#type: Type, args: &[(String, Type)]) -> bool {
-        let args = args.iter().map(|(name, ty)| {
-            ty.clone()
-        }).collect();
+        let args = args.iter().map(|(name, ty)| ty.clone()).collect();
         self.funcs.insert(name, Fn { r#type, args }).is_some()
     }
-    
+
     pub fn set_file(&mut self, name: PathBuf, contents: String) {
         self.file = (contents, name);
     }
-    
+
     pub fn file_as_str(&self) -> &str {
         self.file.0.as_str()
     }
@@ -279,7 +279,7 @@ impl Scope {
 
 impl std::ops::Deref for Scope {
     type Target = std::collections::HashMap<String, Type>;
-    
+
     fn deref(&self) -> &Self::Target {
         &self.vars
     }
@@ -304,17 +304,7 @@ impl OpUtils for Op {
             Op::Div(a) => Op::Div(Box::new((lhs, rhs))),
             Op::Mod(a) => Op::Mod(Box::new((lhs, rhs))),
             Op::Pow(a) => Op::Pow(Box::new((lhs, rhs))),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
-
-
-
-
-
-
-
-
-
-

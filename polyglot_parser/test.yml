@@ -2,9 +2,47 @@
 - Typedef:
     name: Person
     type:
-      Struct:
-        - - name
-          - Str
-        - - age
-          - Int
-- Err
+      Tuple:
+        - Str
+        - Int
+- Init:
+    name: alex
+    type:
+      Tuple:
+        - Str
+        - Int
+    value:
+      Tuple:
+        - Str: Alex
+        - Int: 19
+    context: "var alex: Person = (\"Alex\", 19)"
+- Init:
+    name: name
+    type: Int
+    value:
+      TupleAccess:
+        name: alex
+        access_mode:
+          Index: 1
+        name_range:
+          start: 70
+          end: 74
+        access_range:
+          start: 74
+          end: 76
+    context: var name = alex.1
+- Init:
+    name: age
+    type: Err
+    value:
+      TupleAccess:
+        name: alex
+        access_mode:
+          Member: age
+        name_range:
+          start: 87
+          end: 91
+        access_range:
+          start: 91
+          end: 95
+    context: var age = alex.age

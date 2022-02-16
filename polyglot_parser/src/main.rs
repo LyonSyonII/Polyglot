@@ -10,15 +10,17 @@ use clap::Parser;
 struct Cli {
     file: std::path::PathBuf,
     #[clap(short, long)]
-    debug: bool
+    debug: bool,
 }
 
 fn main() -> Result<(), ParseErr> {
     let cli = Cli::parse();
     let main = parse(&cli.file, cli.debug)?;
-    
+
     let buffer = serde_yaml::to_string(&main).unwrap();
-    if cli.debug { println!("{buffer}") }
+    if cli.debug {
+        println!("{buffer}")
+    }
     let path = cli.file.with_extension("yml");
     std::fs::write(path, buffer).unwrap();
     Ok(())
