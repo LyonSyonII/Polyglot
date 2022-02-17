@@ -377,21 +377,6 @@ The above function would be transpiled into:
 So avoid using generic enums for a lot of types/arguments, as the number of implementations will increase a lot.  
 [Type defined generics](#type-defined-generics) are much preferred, as they only generate one implementation per type used.
 
-### Expressions
-If/elif/else/match are expressions for Polyglot, meaning that you can assign them to variables.
-If you're familiar with the Rust programming language, the behaviour is the same.
-
-	var str_bool = "true"
-	var parsed_bool: bool = 	
-		match
-		    "true"  => true
-		    "false" => false
-		end
-
-	// parsed_bool = true
-
-All branches must return values of the same type, as a variable cannot be of multiple types.
-
 ### Basic operations
     var number = 10
     var ops: num

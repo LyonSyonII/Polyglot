@@ -12,14 +12,17 @@ CL = @{ ":" ~ WHITESPACE+ }
 KW = _{ "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
 COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
-Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | Fn | Call) }
-RetExpr = { "if/elseif/else/match" }
+Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | If | Fn | Call ) }
 
 Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
 
 Decl = { "var" ~ Name ~ ":" ~ Type }
 
 Typedef = { "type" ~ Name ~ "=" ~ Type }
+
+If = { "if" ~ "("? ~ Cmp ~ ")"? ~ Expr* ~ ("end" | Elif | Else) | "if" ~ "("? ~ Cmp ~ ")"? ~ "=>" ~ Expr ~ (Elif | Else)? }
+Elif = { "elif" ~ "("? ~ Cmp ~ ")"? ~ Expr* ~ ("end" | Elif | Else) | "elif" ~ "("? ~ Cmp ~ ")"? ~ "=>" ~ Expr ~ (Elif | Else)? }
+Else = { "else" ~ Expr* ~ "end" | "else" ~ "=>" ~ Expr }
 
 Fn = { "fn" ~ Name ~ ArgsDef? ~ (":" ~ Type)? ~ Expr* ~ "end" }
 ArgsDef = { "(" ~ (Name ~ ":" ~ Type ~ (", " ~ Name ~ ":" ~ Type)*)? ~ ")" }
@@ -36,7 +39,7 @@ ModAssig = { Name ~ "%=" ~ Value }
 // Complex values
 Name = @{ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
-Value = { Op | Cmp | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | RetExpr }
+Value = { Op | Cmp | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name }
 Call = { Name ~ "(" ~ (Value ~ ("," ~ Value)*)? ~ ")" }
 
 // Primitives
@@ -58,7 +61,7 @@ DictPair = { Value ~ "->" ~ Value }
 Dict = { "[" ~ DictPair ~ ("," ~ DictPair)* ~ "]" }
 
 // Recursives
-Lhs = { Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | RetExpr }
+Lhs = { Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name }
 Op = { Add | Sub | Mul | Div | Mod | Pow }
 
 Add = { Lhs ~ "+" ~ Value }
