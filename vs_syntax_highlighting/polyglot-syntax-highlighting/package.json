@@ -30,5 +30,6 @@
                 "path": "./syntaxes/polyglot.tmLanguage.json"
             }
         ]
-    }
+    },
+    "repository": "https://github.com/LyonSyonII/Polyglot/tree/main/vs_syntax_highlighting/polyglot-syntax-highlighting"
 }
