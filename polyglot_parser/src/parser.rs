@@ -494,6 +494,7 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
 }
 
 fn parse_value_cmp(cmp: nodes::Cmp, scope: &Scope) -> Cmp {
+    // TODO! Errors for all conditions
     match cmp.to_enum() {
         nodes::CmpChildren::Less(l) => {
             let lhs = parse_value(&l.get_Lhs(), scope);
