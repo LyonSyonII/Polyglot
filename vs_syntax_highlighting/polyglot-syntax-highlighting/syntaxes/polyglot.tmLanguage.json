@@ -25,39 +25,39 @@
 					"match": "\\b(true|false)\\b"
 				},
 				{
-					"name": "entity.name.type",
+					"name": "entity.name.type.polyglot",
 					"match": "\\b(int|num|bool|char|str)\\b|(?<=type )\\b\\w+\\b|(?<=var \\b\\w+\\b( )*:( )*)\\b\\w+\\b|(?<=: )\\b\\w+\\b"
 				},
 				{
-					"name": "meta.function.definition entity.name.function",
+					"name": "meta.function.definition.polyglot entity.name.function.polyglot",
 					"match": "(?<=fn)( )*\\w+"
 				},
 				{
-					"name": "meta.function.call entity.name.function",
+					"name": "meta.function.call.polyglot entity.name.function.polyglot",
 					"match": "\\w+( )*(?=\\()"
 				},
 				{
-					"name": "variable.parameter meta.struct.member source",
+					"name": "variable.parameter.polyglot meta.struct.member.polyglot source.polyglot",
 					"match": "(?<=\\w\\.)\\w+"
 				},
 				{
-					"name": "storage",
+					"name": "storage.polyglot",
 					"match": "\\b(var|type)\\b"
 				},
 				{
-					"name": "comment",
+					"name": "comment.polyglot",
 					"match": "//.*"
 				},
 				{
-					"name": "keyword.operator",
+					"name": "keyword.operator.polyglot",
 					"match": "(>)|(<)|(=)|(>=)|(<=)|(:)|(&&)|(\\|\\|)|(\\+)|(-)|(\\*)|(/)|(%)|(\\.)"
 				},
 				{
-					"name": "constant.numeric",
+					"name": "constant.numeric.polyglot",
 					"match": "\\d"
 				},
 				{
-					"name": "variable.other",
+					"name": "variable.other.polyglot",
 					"match": "\\w"
 				}
 			]
@@ -70,6 +70,22 @@
 				{
 					"name": "constant.character.escape.polyglot",
 					"match": "\\\\."
+				},
+				{
+					"name": "string.interpolated.brackets.polyglot keyword.operator.polyglot",
+					"match": "{|}"
+				},
+				{
+					"name": "string.interpolated.polyglot keyword.operator.polyglot",
+					"match": "\\."
+				},
+				{
+					"name": "string.interpolated.polyglot variable.parameter.polyglot meta.struct.member.polyglot source.polyglot",
+					"match": "(?<={\\w+\\.)\\w+(?=})"
+				},
+				{
+					"name": "string.interpolated.polyglot variable.other.polyglot",
+					"match": "(?<={)\\w+(?=(\\.\\w+)?})"
 				}
 			]
 		}
