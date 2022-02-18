@@ -12,8 +12,9 @@ CL = @{ ":" ~ WHITESPACE+ }
 KW = _{ "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
 COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
-Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | If | Fn | Call ) }
+Expr = { (Use | ModuleAccess | Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | If | Fn | Call ) }
 
+Use = { "use " ~ Name }
 Init = { "var " ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
 
 Decl = { "var " ~ Name ~ ":" ~ Type }
@@ -39,8 +40,10 @@ ModAssig = { Name ~ "%=" ~ Value }
 // Complex values
 Name = @{ (ASCII_ALPHA | "_")+ }
 Index = { ASCII_DIGIT }
-Value = { Op | Cmp | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name }
+Value = { ModuleAccess | TypeConversion | Op | Cmp | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name }
 Call = { Name ~ "(" ~ (Value ~ ("," ~ Value)*)? ~ ")" }
+ModuleAccess = { Name ~ "::" ~ (Call | Name) }
+TypeConversion = { (TInt | TBool | TChar | TStr) ~ "(" ~ Value ~ ")" }
 
 // Primitives
 Int = @{ "-"? ~ ASCII_DIGIT+ }

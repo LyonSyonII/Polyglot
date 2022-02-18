@@ -3,7 +3,7 @@ Variable types will be inferred.
     
     var integer = 5
     var number = 5.5
-    var boolean = true|false
+    var boolean = true/false
     var character = 'a'
     var string = "abc"
     var tuple = ("abc", 5)
@@ -495,11 +495,16 @@ Prints the contents of a variable to the terminal.
     print(a)
     // Output: 5
 
-You can operate inside the print argument (useful for concatenating strings).
-
+You can interpolate strings inside the print function.
+    
     var a = 5
-    print("a is equal to" + a)
+    print("a is equal to {a}")
     // Output: "a is equal to 5"
+
+It is also possible to print a newline at the end of the message with `println`
+
+    println("printing with endline")
+    // Output: "printing with endline\n"
 
 #### Dbg
 You can use it to quickly debug some variable.
