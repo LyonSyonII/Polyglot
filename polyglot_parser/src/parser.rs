@@ -393,6 +393,13 @@ fn parse_value(value: &impl ToValueEnum, scope: &Scope) -> Value {
 }
 
 fn parse_value_list_access(la: nodes::ListAccess, scope: &Scope) -> Value {
+    struct E {
+        name: String,
+    };
+
+    let a: E = E { name: "Hey" };
+    a.name = "aa".into();
+    
     let name = la.get_Name().text().into();
     let name_range = la.get_Name().range();
     let access_range = {

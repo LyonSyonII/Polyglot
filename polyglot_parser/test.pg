@@ -1,5 +1,5 @@
 type Person = (name: str, age: int)
-var Alex = ("Alex", 56)
+var Alex: Person = ("Alex", 56)
 println(Alex.name + " is " + age + "years old")
 var adult = check_if_adult(Alex)
 

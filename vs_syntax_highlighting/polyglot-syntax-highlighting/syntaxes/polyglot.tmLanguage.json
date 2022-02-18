@@ -29,8 +29,16 @@
 					"match": "\\b(int|num|bool|char|str)\\b|(?<=type )\\b\\w+\\b|(?<=var \\b\\w+\\b( )*:( )*)\\b\\w+\\b|(?<=: )\\b\\w+\\b"
 				},
 				{
-					"name": "entity.name.function",
-					"match": "\\w+(?=\\()|(?<=fn) \\w+"
+					"name": "meta.function.definition entity.name.function",
+					"match": "(?<=fn)( )*\\w+"
+				},
+				{
+					"name": "meta.function.call entity.name.function",
+					"match": "\\w+( )*(?=\\()"
+				},
+				{
+					"name": "variable.parameter meta.struct.member source",
+					"match": "(?<=\\w\\.)\\w+"
 				},
 				{
 					"name": "storage",
@@ -42,7 +50,7 @@
 				},
 				{
 					"name": "keyword.operator",
-					"match": "(>)|(<)|(=)|(>=)|(<=)|(:)|(&&)|(\\|\\|)|(\\+)|(-)|(\\*)|(/)|(%)"
+					"match": "(>)|(<)|(=)|(>=)|(<=)|(:)|(&&)|(\\|\\|)|(\\+)|(-)|(\\*)|(/)|(%)|(\\.)"
 				},
 				{
 					"name": "constant.numeric",
