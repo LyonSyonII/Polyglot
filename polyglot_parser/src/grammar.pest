@@ -14,14 +14,14 @@ COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
 Expr = { (Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | If | Fn | Call ) }
 
-Init = { "var" ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
+Init = { "var " ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
 
-Decl = { "var" ~ Name ~ ":" ~ Type }
+Decl = { "var " ~ Name ~ ":" ~ Type }
 
-Typedef = { "type" ~ Name ~ "=" ~ Type }
+Typedef = { "type " ~ Name ~ "=" ~ Type }
 
-If = { "if" ~ "("? ~ Cmp ~ ")"? ~ Expr* ~ ("end" | Elif | Else) | "if" ~ "("? ~ Cmp ~ ")"? ~ "=>" ~ Expr ~ (Elif | Else)? }
-Elif = { "elif" ~ "("? ~ Cmp ~ ")"? ~ Expr* ~ ("end" | Elif | Else) | "elif" ~ "("? ~ Cmp ~ ")"? ~ "=>" ~ Expr ~ (Elif | Else)? }
+If = { "if" ~ "("? ~ (And | Or | Cmp) ~ ")"? ~ Expr* ~ ("end" | Elif | Else) | "if" ~ "("? ~ Cmp ~ ")"? ~ "=>" ~ Expr ~ (Elif | Else)? }
+Elif = { "elif" ~ "("? ~ (Cmp | And | Or) ~ ")"? ~ Expr* ~ ("end" | Elif | Else) | "elif" ~ "("? ~ Cmp ~ ")"? ~ "=>" ~ Expr ~ (Elif | Else)? }
 Else = { "else" ~ Expr* ~ "end" | "else" ~ "=>" ~ Expr }
 
 Fn = { "fn" ~ Name ~ ArgsDef? ~ (":" ~ Type)? ~ Expr* ~ "end" }
@@ -71,7 +71,7 @@ Div = { Lhs ~ "/" ~ Value }
 Mod = { Lhs ~ "%" ~ Value }
 Pow = { Lhs ~ "^" ~ Value }
 
-Cmp = { Less | Great | LessEq | GreatEq | Equal | NotEq | Not }
+Cmp = { Less | Great | LessEq | GreatEq | Equal | NotEq | Not | Bool | Name }
 Less = { Lhs ~ "<" ~ Value }
 Great = { Lhs ~ ">" ~ Value }
 LessEq = { Lhs ~ "<=" ~ Value }
@@ -79,6 +79,8 @@ GreatEq = { Lhs ~ ">=" ~ Value }
 Equal = { Lhs ~ "=" ~ Value }
 NotEq = { Lhs ~ "!=" ~ Value }
 Not = { "!" ~ Lhs }
+Or = { Cmp ~ "||" ~ (And | Or | Cmp) }
+And = { Cmp ~ "&&" ~ (And | Or | Cmp) }
 
 Parenthesis = { "(" ~ Value ~ ")" }
 

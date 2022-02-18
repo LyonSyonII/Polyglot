@@ -1,6 +1,17 @@
-type Person = (str, int)
+// ROSETTA CODE PROBLEMS
+
+// Compare length of two strings
+fn compare_str_length(a: str, b: str)
+    var a_len = str.len(a)
+    var b_len = str.len(b)
+    
+    if a_len > b_len
+        println("length of '" + a + "' is: " + a_len)
+        println("length of '" + b + "' is: " + b_len)
+    else 
+        println("length of '" + b + "' is: " + b_len)
+        println("length of '" + a + "' is: " + a_len)
+    end
+end
 
 
-var alex: Person = ("Alex", 19)
-var name = alex.1
-var age = alex.age

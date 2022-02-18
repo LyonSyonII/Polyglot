@@ -1,0 +1,66 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Polyglot",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.polyglot",
+					"match": "=>|\\b(if|elif|else|while|for|in|match)\\b|\\s\\b(end)\\b"
+				},
+				{
+					"name": "keyword.polyglot",
+					"match": "\\b(fn|ret|end)\\b"
+				},
+				{
+					"name": "entity.name.type",
+					"match": "\\b(int|num|bool|char|str)\\b"
+				},
+				{
+					"name": "entity.name.function",
+					"match": "\\w+(?=\\()|(?<=fn) \\w+"
+				},
+				{
+					"name": "storage",
+					"match": "\\b(var)\\b"
+				},
+				{
+					"name": "comment",
+					"match": "//.*"
+				},
+				{
+					"name": "keyword.operator",
+					"match": "=|\\+|-|\\*|/|%|\\|\\||&&|:"
+				},
+				{
+					"name": "constant.numeric",
+					"match": "\\d"
+				},
+				{
+					"name": "variable.other",
+					"match": "\\w"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.polyglot",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.polyglot",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "main.pg"
+}

@@ -1,0 +1,25 @@
+{
+    "name": "polyglot-syntax-highlighting",
+    "displayName": "Polyglot Syntax Highlighting",
+    "description": "Syntax Highlighting for the Polyglot programming language",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.64.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "polyglot",
+            "aliases": ["Polyglot", "polyglot"],
+            "extensions": [".pg"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "polyglot",
+            "scopeName": "main.pg",
+            "path": "./syntaxes/polyglot.tmLanguage.json"
+        }]
+    }
+}
