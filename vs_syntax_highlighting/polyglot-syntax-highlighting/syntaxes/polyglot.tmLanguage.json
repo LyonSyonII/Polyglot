@@ -21,8 +21,12 @@
 					"match": "\\b(fn|ret|end)\\b"
 				},
 				{
+					"name": "constant.language.bool.polyglot",
+					"match": "\\b(true|false)\\b"
+				},
+				{
 					"name": "entity.name.type",
-					"match": "\\b(int|num|bool|char|str)\\b"
+					"match": "\\b(int|num|bool|char|str)\\b|(?<=type )\\b\\w+\\b|(?<=var \\b\\w+\\b( )*:( )*)\\b\\w+\\b|(?<=: )\\b\\w+\\b"
 				},
 				{
 					"name": "entity.name.function",
@@ -30,7 +34,7 @@
 				},
 				{
 					"name": "storage",
-					"match": "\\b(var)\\b"
+					"match": "\\b(var|type)\\b"
 				},
 				{
 					"name": "comment",
@@ -38,7 +42,7 @@
 				},
 				{
 					"name": "keyword.operator",
-					"match": "=|\\+|-|\\*|/|%|\\|\\||&&|:"
+					"match": "(>)|(<)|(=)|(>=)|(<=)|(:)|(&&)|(\\|\\|)|(\\+)|(-)|(\\*)|(/)|(%)"
 				},
 				{
 					"name": "constant.numeric",

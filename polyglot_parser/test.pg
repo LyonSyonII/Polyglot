@@ -1,17 +1,13 @@
-// ROSETTA CODE PROBLEMS
+type Person = (name: str, age: int)
+var Alex = ("Alex", 56)
+println(Alex.name + " is " + age + "years old")
+var adult = check_if_adult(Alex)
 
-// Compare length of two strings
-fn compare_str_length(a: str, b: str)
-    var a_len = str.len(a)
-    var b_len = str.len(b)
-    
-    if a_len > b_len
-        println("length of '" + a + "' is: " + a_len)
-        println("length of '" + b + "' is: " + b_len)
-    else 
-        println("length of '" + b + "' is: " + b_len)
-        println("length of '" + a + "' is: " + a_len)
-    end
+fn check_if_adult(person: Person): bool
+    if person.age >= 18
+        println(person.name + " is an adult")
+        ret true
+    elif person.age >= 15 => println(person.name + " is a teenager")
+    else                  => println(person.name + " is a child")
+    ret false
 end
-
-

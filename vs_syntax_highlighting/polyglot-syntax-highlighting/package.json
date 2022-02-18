@@ -10,16 +10,25 @@
         "Programming Languages"
     ],
     "contributes": {
-        "languages": [{
-            "id": "polyglot",
-            "aliases": ["Polyglot", "polyglot"],
-            "extensions": [".pg"],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "polyglot",
-            "scopeName": "main.pg",
-            "path": "./syntaxes/polyglot.tmLanguage.json"
-        }]
+        "languages": [
+            {
+                "id": "polyglot",
+                "aliases": [
+                    "Polyglot",
+                    "polyglot"
+                ],
+                "extensions": [
+                    ".pg"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "polyglot",
+                "scopeName": "main.pg",
+                "path": "./syntaxes/polyglot.tmLanguage.json"
+            }
+        ]
     }
 }

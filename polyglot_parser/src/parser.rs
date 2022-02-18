@@ -91,7 +91,6 @@ fn parse_expr(expr: nodes::Expr, scope: &mut Scope) -> Expr {
             let name = t.get_Name().to_string();
             let r#type = parse_type(&t.get_Type(), scope);
             scope.insert(name.clone(), r#type.clone());
-
             Expr::Typedef { name, r#type }
         }
         nodes::ExprChildren::If(_) => todo!(),
