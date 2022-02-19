@@ -1,13 +1,19 @@
-type Person = (name: str, age: int)
-var Alex: Person = ("Alex", 56)
-println("{Alex.name} is {Alex.age} years old")
-var adult = check_if_adult(Alex)
+var a = (false = false) || true
 
-fn check_if_adult(person: Person): bool
-    if person.age >= 18
-        println("{person.name} is an adult")
-        ret true
-    elif person.age >= 15 => println("{person.name} is a teenager")
-    else                  => println("{person.name} is a child")
-    ret false
-end
+// type Person = (name: str, age: int)
+// var Alex: Person = ("Alex", 56)
+// println("{Alex.name} is {Alex.age} years old")
+// var adult = check_if_adult(Alex)
+// 
+// fn check_if_adult(person: Person): bool
+//     if person.age >= 18
+//         println("{person.name} is an adult")
+//         ret true
+//     elif person.age >= 15 => println("{person.name} is a teenager")
+//     else                  => println("{person.name} is a child")
+//     ret false
+// end
+
+
+
+

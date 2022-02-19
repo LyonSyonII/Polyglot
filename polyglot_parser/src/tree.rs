@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 
 use derive_new::new;
+use either::Either;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -140,6 +141,8 @@ pub enum Cmp {
     Equal(Box<(Value, Value)>),
     NotEq(Box<(Value, Value)>),
     Not(Box<Value>),
+    Or(Box<(Value, Value)>),
+    And(Box<(Value, Value)>),
     Err,
 }
 
@@ -224,7 +227,7 @@ impl std::fmt::Display for Type {
             Type::Dict(d) => write!(f, "[{} -> {}]", d.0, d.1),
             Type::Void => write!(f, "void"),
             Type::Custom(c) => write!(f, "{c}"),
-            Type::Err => unreachable!(),
+            Type::Err => write!(f, "error"),
         }
     }
 }

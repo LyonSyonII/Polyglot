@@ -1,33 +1,22 @@
 ---
 - Init:
     name: a
-    type:
-      List:
-        Struct:
-          - - name
-            - Str
-          - - age
-            - Tuple:
-                - List:
-                    Tuple:
-                      - Int
-                      - Int
-                - List: Int
+    type: Bool
     value:
-      List:
-        - Struct:
-            - - name
-              - Str: a
-            - - age
-              - Tuple:
-                  - List:
-                      - Tuple:
-                          - Int: 5
-                          - Int: 6
-                      - Tuple:
-                          - Int: 7
-                          - Int: 8
-                  - List:
-                      - Int: 9
-                      - Int: 10
-    context: "var a = [(name: \"a\", age: ([(5, 6), (7, 8)], [9, 10]))]"
+      Cmp:
+        cmp:
+          Or:
+            - Parenthesis:
+                Bool:
+                  Cmp:
+                    Equal:
+                      - Bool:
+                          Primitive: false
+                      - Bool:
+                          Primitive: false
+            - Bool:
+                Primitive: true
+        range:
+          start: 8
+          end: 31
+    context: var a = (false = false) || true

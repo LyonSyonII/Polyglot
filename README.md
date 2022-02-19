@@ -189,17 +189,20 @@ One-liners are supported by using the `=>` operator next to the condition.
     // NOT VALID
     if condition // something
 
-You can chain conditions with the "&&" and "||" operators
+You can chain conditions with the "&&" and "||" operators.  
+Be aware that these operators do not take priority, so parenthesis are needed.
     
-    // Check if a > 0 AND a < 5
-    if a > 0 && a < 5
+    // Check if (a > 0) AND (a < 5)
+    if (a > 0) && (a < 5)
         print("a is in the (0, 5) range")
     end
     
-    // Check if a < 0 OR a > 0
-    if a < 0 || a > 0
+    // Check if (a < 0) OR (a > 0)
+    if (a < 0) || (a > 0)
         print("a is not 0")
     end
+
+> Probably on some flavors the operators *do* take priority, but Polyglot cannot ensure all of them will
 
 #### Match
 The match pattern allows to check if a variable has certain compile-time values.  
@@ -214,7 +217,7 @@ You can indicate an "if any of these" using "_".
         5 => print("five")
         _ => print("number not defined")
 
-On most languages it is basically identical to an if / else if / else
+On most languages it is basically identical to an if / else if / else.
     
     var number = 5
     if   number = 1 => print("one")

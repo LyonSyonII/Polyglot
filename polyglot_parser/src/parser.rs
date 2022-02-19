@@ -7,6 +7,7 @@ use std::sync::Mutex;
 
 use crate::tree::*;
 use clap::Parser as P;
+use either::Either;
 use inner::inner;
 use pest::iterators::{Pair, Pairs};
 use pest::Parser as Pest;
@@ -41,6 +42,8 @@ pub fn parse(file: &std::path::Path, debug: bool) -> Result<Main, ParseErr> {
 
 fn parse_expr(expr: nodes::Expr, scope: &mut Scope) -> Expr {
     match expr.to_enum() {
+        nodes::ExprChildren::Use(u) => todo!(),
+        nodes::ExprChildren::ModuleAccess(m) => todo!(),
         nodes::ExprChildren::Init(init) => parse_init(init, scope),
         nodes::ExprChildren::Decl(decl) => parse_decl(decl, scope),
         nodes::ExprChildren::Assig(assig) => parse_assig(assig, scope),
@@ -331,11 +334,7 @@ fn parse_value(value: &impl ToValueEnum, scope: &Scope) -> Value {
     match value.to_value_enum() {
         nodes::ValueChildren::Int(i) => Value::Int(i.text().parse().unwrap()),
         nodes::ValueChildren::Num(n) => Value::Num(n.text().parse().unwrap()),
-        nodes::ValueChildren::Bool(b) => match b.text() {
-            "true" => Value::Bool(Bool::Primitive(true)),
-            "false" => Value::Bool(Bool::Primitive(false)),
-            _ => unreachable!(),
-        },
+        nodes::ValueChildren::Bool(b) => Value::Bool(Bool::Primitive(b.text() == "true")),
         nodes::ValueChildren::Char(c) => Value::Char(c.text().as_bytes()[0] as char),
         nodes::ValueChildren::Str(s) => {
             Value::Str(s.text().strip_prefix('"').unwrap().strip_suffix('"').unwrap().into())
@@ -381,6 +380,32 @@ fn parse_value(value: &impl ToValueEnum, scope: &Scope) -> Value {
         nodes::ValueChildren::Op(op) => parse_value_op(op, scope),
         nodes::ValueChildren::Cmp(cmp) => Value::Bool(Bool::Cmp(parse_value_cmp(cmp, scope))),
         nodes::ValueChildren::Parenthesis(p) => Value::Parenthesis(Box::new(parse_value(&p.get_Value(), scope))),
+        nodes::ValueChildren::And(and) => {
+            let lhs = if let Some(lhs) = and.list_Lhs().next() {
+                parse_value(&lhs, scope)
+            } else {
+                let cmp = and.list_Cmp().next().unwrap();
+                let range = cmp.span().start()..cmp.span().end();
+                Value::Cmp {cmp: parse_value_cmp(cmp, scope), range}
+            };
+
+            let rhs = parse_value(&and.get_Value(), scope);
+            
+            Value::Cmp { cmp: Cmp::And(Box::new((lhs, rhs))), range: and.span().start()..and.span().end() }
+        }
+        nodes::ValueChildren::Or(or) => {
+            let lhs = if let Some(lhs) = or.list_Lhs().next() {
+                parse_value(&lhs, scope)
+            } else {
+                let cmp = or.list_Cmp().next().unwrap();
+                let range = cmp.span().start()..cmp.span().end();
+                Value::Cmp {cmp: parse_value_cmp(cmp, scope), range}
+            };
+
+            let rhs = parse_value(&or.get_Value(), scope);
+            
+            Value::Cmp { cmp: Cmp::Or(Box::new((lhs, rhs))), range: or.span().start()..or.span().end() }
+        }
         nodes::ValueChildren::Call(c) => {
             let call = parse_call(c, scope);
             if let Expr::Call { name, args } = call {
@@ -389,6 +414,8 @@ fn parse_value(value: &impl ToValueEnum, scope: &Scope) -> Value {
                 Value::Err
             }
         }
+        nodes::ValueChildren::ModuleAccess(m) => todo!(),
+        nodes::ValueChildren::TypeConversion(t) => todo!(),
     }
 }
 
@@ -494,60 +521,122 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
 }
 
 fn parse_value_cmp(cmp: nodes::Cmp, scope: &Scope) -> Cmp {
+    let can_cmp = |lhs, rhs| -> bool {
+        let lty = parse_type_from_value(lhs, scope);
+        let rty = parse_type_from_value(rhs, scope);
+
+        if lty == rty {
+            match lty {
+                Type::Tuple(_) | Type::Struct(_) => printerr(
+                    &cmp.range(),
+                    "comparing tuple/struct",
+                    "tuples/structs cannot be compared, create a function if you need it",
+                    scope,
+                )
+                ._false(),
+                Type::Void => printerr(
+                    &cmp.range(),
+                    "trying to compare void expressions",
+                    "functions return void, which cannot be compared",
+                    scope,
+                )
+                ._false(),
+                Type::Custom(_) => unreachable!(),
+                Type::Err => false,
+                _ => true,
+            }
+        } else {
+            printerr(
+                &cmp.range(),
+                "comparing values of different types",
+                "only comparisons of the same type are allowed",
+                scope,
+            )
+            ._false()
+        }
+    };
     // TODO! Errors for all conditions
     match cmp.to_enum() {
         nodes::CmpChildren::Less(l) => {
             let lhs = parse_value(&l.get_Lhs(), scope);
             let rhs = parse_value(&l.get_Value(), scope);
-            let lty = parse_type_from_value(&lhs, scope);
-            let rty = parse_type_from_value(&rhs, scope);
-
-            if lty == rty {
-                match lty {
-                    Type::Tuple(_) | Type::Struct(_) => printerr(
-                        &cmp.range(),
-                        "comparing tuple/struct",
-                        "tuples/structs cannot be compared, create a function if you need it",
-                        scope,
-                    )
-                    .cmp_err(),
-                    Type::Void => printerr(
-                        &cmp.range(),
-                        "trying to compare void expressions",
-                        "functions return void, which cannot be compared",
-                        scope,
-                    )
-                    .cmp_err(),
-                    Type::Custom(_) => unreachable!(),
-                    Type::Err => Cmp::Err,
-                    _ => Cmp::Less(Box::new((parse_value(&l.get_Lhs(), scope), parse_value(&l.get_Value(), scope)))),
-                }
+            if can_cmp(&lhs, &rhs) {
+                Cmp::Less(Box::new((lhs, rhs)))
             } else {
-                printerr(
-                    &cmp.range(),
-                    "comparing values of different types",
-                    "only comparisons of the same type are allowed",
-                    scope,
-                )
-                .cmp_err()
+                Cmp::Err
             }
         }
         nodes::CmpChildren::Great(g) => {
-            Cmp::Greater(Box::new((parse_value(&g.get_Lhs(), scope), parse_value(&g.get_Value(), scope))))
+            let lhs = parse_value(&g.get_Lhs(), scope);
+            let rhs = parse_value(&g.get_Value(), scope);
+            if can_cmp(&lhs, &rhs) {
+                Cmp::Greater(Box::new((lhs, rhs)))
+            } else {
+                Cmp::Err
+            }
         }
         nodes::CmpChildren::LessEq(le) => {
-            Cmp::LessEq(Box::new((parse_value(&le.get_Lhs(), scope), parse_value(&le.get_Value(), scope))))
+            let lhs = parse_value(&le.get_Lhs(), scope);
+            let rhs = parse_value(&le.get_Value(), scope);
+            if can_cmp(&lhs, &rhs) {
+                Cmp::LessEq(Box::new((lhs, rhs)))
+            } else {
+                Cmp::Err
+            }
         }
         nodes::CmpChildren::GreatEq(ge) => {
-            Cmp::GreatEq(Box::new((parse_value(&ge.get_Lhs(), scope), parse_value(&ge.get_Value(), scope))))
+            let lhs = parse_value(&ge.get_Lhs(), scope);
+            let rhs = parse_value(&ge.get_Value(), scope);
+            if can_cmp(&lhs, &rhs) {
+                Cmp::GreatEq(Box::new((lhs, rhs)))
+            } else {
+                Cmp::Err
+            }
         }
         nodes::CmpChildren::Equal(eq) => {
-            Cmp::Equal(Box::new((parse_value(&eq.get_Lhs(), scope), parse_value(&eq.get_Value(), scope))))
+            let lhs = parse_value(&eq.get_Lhs(), scope);
+            let rhs = parse_value(&eq.get_Value(), scope);
+            if can_cmp(&lhs, &rhs) {
+                Cmp::Equal(Box::new((lhs, rhs)))
+            } else {
+                Cmp::Err
+            }
         }
         nodes::CmpChildren::NotEq(neq) => {
-            Cmp::NotEq(Box::new((parse_value(&neq.get_Lhs(), scope), parse_value(&neq.get_Value(), scope))))
+            let lhs = parse_value(&neq.get_Lhs(), scope);
+            let rhs = parse_value(&neq.get_Value(), scope);
+            if can_cmp(&lhs, &rhs) {
+                Cmp::NotEq(Box::new((lhs, rhs)))
+            } else {
+                Cmp::Err
+            }
         }
-        nodes::CmpChildren::Not(n) => Cmp::Not(Box::new(parse_value(&n.get_Lhs(), scope))),
+        nodes::CmpChildren::Not(n) => {
+            let lhs = parse_value(&n.get_Value(), scope);
+            let lhs_t = parse_type_from_value(&lhs, scope);
+            if lhs_t == Type::Bool {
+                Cmp::Not(Box::new(lhs))
+            } else if lhs_t != Type::Err {
+                printerr(&(n.span().start()..n.span().end()), "wrong negation type", format!("type '{lhs_t}' can't be negated"), scope).cmp_err()
+            } else {
+                Cmp::Err
+            }
+        },
+        /*
+        nodes::CmpChildren::Name(name) => {
+            let var = name.to_string();
+            if let Some(var_t) = scope.get(&var) {
+                if *var_t == Type::Bool {
+                    Cmp::Name(var)
+                } else {
+                    printerr(&name.range(), "wrong comparison type", format!("expected 'bool', found {var_t})"), scope).cmp_err()
+                }
+            } else {
+                printerr(&name.range(), "comparison with inexistent variable", "not declared", scope).cmp_err()
+            }
+        }
+        nodes::CmpChildren::Bool(b) => Cmp::Bool(b.text() == "true"),
+        */
     }
 }
 
@@ -724,6 +813,14 @@ impl ParseErr {
     pub fn cmp_err(self) -> Cmp {
         Cmp::Err
     }
+
+    pub fn _false(self) -> bool {
+        false
+    }
+
+    pub fn _true(self) -> bool {
+        true
+    }
 }
 
 fn printerr(range: &std::ops::Range<usize>, header: impl AsRef<str>, text: impl AsRef<str>, scope: &Scope) -> ParseErr {
@@ -806,6 +903,8 @@ impl ToValueEnum for nodes::Lhs<'_> {
             LhsChildren::List(l) => ValueChildren::List(l),
             LhsChildren::ListAccess(la) => ValueChildren::ListAccess(la),
             LhsChildren::Parenthesis(p) => ValueChildren::Parenthesis(p),
+            LhsChildren::TypeConversion(tc) => todo!(),
+            LhsChildren::ModuleAccess(ma) => todo!(),
         }
     }
 }
