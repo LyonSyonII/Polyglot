@@ -1,22 +1,17 @@
 ---
 - Init:
     name: a
-    type: Bool
+    type:
+      List: Bool
     value:
-      Cmp:
-        cmp:
-          Or:
-            - Parenthesis:
-                Bool:
-                  Cmp:
-                    Equal:
-                      - Bool:
-                          Primitive: false
-                      - Bool:
-                          Primitive: false
-            - Bool:
-                Primitive: true
+      Op:
+        op:
+          Add:
+            - List:
+                - Bool:
+                    Primitive: true
+            - Int: 5
         range:
           start: 8
-          end: 31
-    context: var a = (false = false) || true
+          end: 18
+    context: "var a = [true] + 5"

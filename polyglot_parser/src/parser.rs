@@ -386,12 +386,18 @@ fn parse_value(value: &impl ToValueEnum, scope: &Scope) -> Value {
             } else {
                 let cmp = and.list_Cmp().next().unwrap();
                 let range = cmp.span().start()..cmp.span().end();
-                Value::Cmp {cmp: parse_value_cmp(cmp, scope), range}
+                Value::Cmp {
+                    cmp: parse_value_cmp(cmp, scope),
+                    range,
+                }
             };
 
             let rhs = parse_value(&and.get_Value(), scope);
-            
-            Value::Cmp { cmp: Cmp::And(Box::new((lhs, rhs))), range: and.span().start()..and.span().end() }
+
+            Value::Cmp {
+                cmp: Cmp::And(Box::new((lhs, rhs))),
+                range: and.span().start()..and.span().end(),
+            }
         }
         nodes::ValueChildren::Or(or) => {
             let lhs = if let Some(lhs) = or.list_Lhs().next() {
@@ -399,12 +405,18 @@ fn parse_value(value: &impl ToValueEnum, scope: &Scope) -> Value {
             } else {
                 let cmp = or.list_Cmp().next().unwrap();
                 let range = cmp.span().start()..cmp.span().end();
-                Value::Cmp {cmp: parse_value_cmp(cmp, scope), range}
+                Value::Cmp {
+                    cmp: parse_value_cmp(cmp, scope),
+                    range,
+                }
             };
 
             let rhs = parse_value(&or.get_Value(), scope);
-            
-            Value::Cmp { cmp: Cmp::Or(Box::new((lhs, rhs))), range: or.span().start()..or.span().end() }
+
+            Value::Cmp {
+                cmp: Cmp::Or(Box::new((lhs, rhs))),
+                range: or.span().start()..or.span().end(),
+            }
         }
         nodes::ValueChildren::Call(c) => {
             let call = parse_call(c, scope);
@@ -495,10 +507,41 @@ fn parse_value_list_access(la: nodes::ListAccess, scope: &Scope) -> Value {
 }
 
 fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
+    let same_types = |lhs, rhs| -> bool {
+        let lhs_t = parse_type_from_value(lhs, scope);
+        let rhs_t = parse_type_from_value(rhs, scope);
+        
+        if lhs_t == rhs_t {
+            true
+        }
+        else {
+            printerr(&(op.span().start()..op.span().end()), "cannot add values of different types", format!("cannot add '{lhs_t}' to '{rhs_t}'"), scope)._false()
+        } 
+    };
     Value::Op {
         op: match op.to_enum() {
             nodes::OpChildren::Add(a) => {
-                Op::Add(Box::new((parse_value(&a.get_Lhs(), scope), parse_value(&a.get_Value(), scope))))
+                let lhs = parse_value(&a.get_Lhs(), scope);
+                let rhs = parse_value(&a.get_Value(), scope);
+
+                let lhs_t = parse_type_from_value(lhs, scope);
+                let rhs_t = parse_type_from_value(rhs, scope);
+                
+                let same_types = if lhs_t == rhs_t {
+                    true
+                } else if let Type::List(list) = lhs_t {
+                    if lhs_t == *list { true }
+                    printerr(&(op.span().start()..op.span().end()), "")._false()
+                } 
+                else {
+                    printerr(&(op.span().start()..op.span().end()), "cannot add values of different types", format!("cannot add '{lhs_t}' to '{rhs_t}'"), scope)._false()
+                };
+                
+                if same_types(&lhs, &rhs) {
+                    Op::Add(Box::new((lhs, rhs)))
+                } else {
+                    return Value::Err
+                }
             }
             nodes::OpChildren::Sub(s) => {
                 Op::Sub(Box::new((parse_value(&s.get_Lhs(), scope), parse_value(&s.get_Value(), scope))))
@@ -617,26 +660,31 @@ fn parse_value_cmp(cmp: nodes::Cmp, scope: &Scope) -> Cmp {
             if lhs_t == Type::Bool {
                 Cmp::Not(Box::new(lhs))
             } else if lhs_t != Type::Err {
-                printerr(&(n.span().start()..n.span().end()), "wrong negation type", format!("type '{lhs_t}' can't be negated"), scope).cmp_err()
+                printerr(
+                    &(n.span().start()..n.span().end()),
+                    "wrong negation type",
+                    format!("type '{lhs_t}' can't be negated"),
+                    scope,
+                )
+                .cmp_err()
             } else {
                 Cmp::Err
             }
-        },
-        /*
-        nodes::CmpChildren::Name(name) => {
-            let var = name.to_string();
-            if let Some(var_t) = scope.get(&var) {
-                if *var_t == Type::Bool {
-                    Cmp::Name(var)
-                } else {
-                    printerr(&name.range(), "wrong comparison type", format!("expected 'bool', found {var_t})"), scope).cmp_err()
-                }
-            } else {
-                printerr(&name.range(), "comparison with inexistent variable", "not declared", scope).cmp_err()
-            }
-        }
-        nodes::CmpChildren::Bool(b) => Cmp::Bool(b.text() == "true"),
-        */
+        } /*
+          nodes::CmpChildren::Name(name) => {
+              let var = name.to_string();
+              if let Some(var_t) = scope.get(&var) {
+                  if *var_t == Type::Bool {
+                      Cmp::Name(var)
+                  } else {
+                      printerr(&name.range(), "wrong comparison type", format!("expected 'bool', found {var_t})"), scope).cmp_err()
+                  }
+              } else {
+                  printerr(&name.range(), "comparison with inexistent variable", "not declared", scope).cmp_err()
+              }
+          }
+          nodes::CmpChildren::Bool(b) => Cmp::Bool(b.text() == "true"),
+          */
     }
 }
 
