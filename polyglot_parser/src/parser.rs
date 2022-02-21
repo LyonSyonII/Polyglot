@@ -914,6 +914,7 @@ impl ParseErr {
     }
 }
 
+// TODO! Fix lines in AnnotationList not starting at 0
 fn printerr(range: &std::ops::Range<usize>, header: impl AsRef<str>, text: impl AsRef<str>, scope: &Scope) -> ParseErr {
     let mut list = AnnotationList::new(scope.file_path().to_string_lossy(), scope.file_as_str());
     list.error(range.start..range.end, header.as_ref(), text.as_ref())
