@@ -35,6 +35,16 @@ pub enum Expr {
         name: String,
         r#type: Type,
     },
+    If {
+        cmp: Value,
+        exprs: Vec<Expr>,
+        elif: Option<Box<Expr>>,
+        context: String,
+    },
+    Else {
+        exprs: Vec<Expr>,
+        context: String,
+    },
     Fn {
         name: String,
         r#type: Type,

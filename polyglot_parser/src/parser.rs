@@ -96,7 +96,7 @@ fn parse_expr(expr: nodes::Expr, scope: &mut Scope) -> Expr {
             scope.insert(name.clone(), r#type.clone());
             Expr::Typedef { name, r#type }
         }
-        nodes::ExprChildren::If(_) => todo!(),
+        nodes::ExprChildren::If(i) => parse_if(i, scope),
         nodes::ExprChildren::Fn(f) => parse_fn(f, scope),
         nodes::ExprChildren::Call(c) => parse_call(c, scope),
     }
@@ -255,6 +255,47 @@ fn parse_assig_op(name_n: nodes::Name, value_n: nodes::Value, operation: Op, con
     };
 
     Expr::Assig { name, value, context }
+}
+
+fn parse_if(i: impl ToIf, scope: &mut Scope) -> Expr {
+    let cmp = parse_value(&i.get_Value(), scope);
+    let mut if_scope = scope.clone_into_new_scope(Vec::new());
+
+    let mut exprs = Vec::new();
+    let mut err_found = false;
+    for expr in i.list_Expr() {
+        let expr = parse_expr(expr, &mut if_scope);
+        err_found = err_found || expr == Expr::Err;
+        exprs.push(expr);
+    }
+    
+    let elif = if let Some(elif) = i.get_Elif() {
+        Some(Box::new(parse_if(elif, scope)))
+    } else if let Some(els) = i.get_Else() {
+        Some(Box::new(parse_else(els, scope)))
+    } else {
+        None
+    };
+    
+    if err_found {
+        Expr::Err
+    } else {
+        Expr::If { cmp, exprs, elif, context: i.get_Ctx() }
+    }
+}
+
+fn parse_else(e: nodes::Else, scope: &mut Scope) -> Expr {
+    let mut scope = scope.clone_into_new_scope(Vec::new());
+
+    let mut exprs = Vec::new();
+    let mut err_found = false;
+    for expr in e.list_Expr() {
+        let expr = parse_expr(expr, &mut scope);
+        err_found = err_found || expr == Expr::Err;
+        exprs.push(expr);
+    }
+
+    Expr::Else { exprs, context: e.text().into() }
 }
 
 fn parse_fn(f: nodes::Fn, scope: &mut Scope) -> Expr {
@@ -524,20 +565,22 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
                 let lhs = parse_value(&a.get_Lhs(), scope);
                 let rhs = parse_value(&a.get_Value(), scope);
 
-                let lhs_t = parse_type_from_value(lhs, scope);
-                let rhs_t = parse_type_from_value(rhs, scope);
+                let lhs_t = parse_type_from_value(&lhs, scope);
+                let rhs_t = parse_type_from_value(&rhs, scope);
                 
                 let same_types = if lhs_t == rhs_t {
                     true
                 } else if let Type::List(list) = lhs_t {
-                    if lhs_t == *list { true }
-                    printerr(&(op.span().start()..op.span().end()), "")._false()
+                    if rhs_t == *list { true }
+                    else {
+                        printerr(&(op.span().start()..op.span().end()), "cannot add values of different types", format!("cannot add '{list}' to '{rhs_t}'"), scope)._false()
+                    }
                 } 
                 else {
                     printerr(&(op.span().start()..op.span().end()), "cannot add values of different types", format!("cannot add '{lhs_t}' to '{rhs_t}'"), scope)._false()
                 };
                 
-                if same_types(&lhs, &rhs) {
+                if same_types {
                     Op::Add(Box::new((lhs, rhs)))
                 } else {
                     return Value::Err
@@ -964,5 +1007,61 @@ pub trait NameNodeUtils {
 impl NameNodeUtils for nodes::Name<'_> {
     fn to_string(&self) -> String {
         self.text().to_owned()
+    }
+}
+
+pub trait ToIf {
+    fn get_Value(&self) -> nodes::Value;
+    
+    fn list_Expr(&self) -> Vec<nodes::Expr>;
+    
+    fn get_Elif(&self) -> Option<nodes::Elif>;
+    
+    fn get_Else(&self) -> Option<nodes::Else>;
+
+    fn get_Ctx(&self) -> String;
+}
+
+impl ToIf for nodes::If<'_> {
+    fn get_Value(&self) -> nodes::Value {
+        self.get_Value()
+    }
+    
+    fn list_Expr(&self) -> Vec<nodes::Expr> {
+        self.list_Expr().collect()
+    }
+    
+    fn get_Elif(&self) -> Option<nodes::Elif> {
+        self.list_Elif().next()
+    }
+    
+    fn get_Else(&self) -> Option<nodes::Else> {
+        self.list_Else().next()
+    }
+
+    fn get_Ctx(&self) -> String {
+        self.text().into()
+    }
+}
+
+impl ToIf for nodes::Elif<'_> {
+    fn get_Value(&self) -> nodes::Value {
+        self.get_Value()
+    }
+    
+    fn list_Expr(&self) -> Vec<nodes::Expr> {
+        self.list_Expr().collect()
+    }
+    
+    fn get_Elif(&self) -> Option<nodes::Elif> {
+        self.list_Elif().next()
+    }
+    
+    fn get_Else(&self) -> Option<nodes::Else> {
+        self.list_Else().next()
+    }
+
+    fn get_Ctx(&self) -> String {
+        self.text().into()
     }
 }
