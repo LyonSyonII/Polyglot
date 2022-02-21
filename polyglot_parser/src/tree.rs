@@ -41,6 +41,12 @@ pub enum Expr {
         elif: Option<Box<Expr>>,
         context: String,
     },
+    Elif {
+        cmp: Value,
+        exprs: Vec<Expr>,
+        elif: Option<Box<Expr>>,
+        context: String
+    },
     Else {
         exprs: Vec<Expr>,
         context: String,
@@ -243,16 +249,11 @@ impl std::fmt::Display for Type {
 }
 
 impl Scope {
-    pub fn new(current_scope: Vec<(String, Type)>, current_functions: HashMap<String, Fn>) -> Scope {
-        let mut map = HashMap::with_capacity(current_scope.len());
-        for var in current_scope.into_iter() {
-            map.insert(var.0, var.1);
-        }
-
+    pub fn new() -> Scope {
         Scope {
-            vars: map,
+            vars: HashMap::new(),
             file: (String::new(), PathBuf::new()),
-            funcs: current_functions,
+            funcs: HashMap::new(),
         }
     }
 
@@ -286,7 +287,16 @@ impl Scope {
     }
 
     pub fn clone_into_new_scope(&self, new_scope_variables: Vec<(String, Type)>) -> Scope {
-        Scope::new(new_scope_variables, self.funcs.clone())
+        let mut map = HashMap::with_capacity(new_scope_variables.len());
+        for var in new_scope_variables.into_iter() {
+            map.insert(var.0, var.1);
+        }
+
+        Scope {
+            vars: map,
+            funcs: self.funcs.clone(),
+            file: self.file.clone(),
+        }
     }
 }
 

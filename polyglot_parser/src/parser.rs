@@ -19,7 +19,7 @@ use show_my_errors::{AnnotationList, Stylesheet};
 pub struct Parser;
 
 pub fn parse(file: &std::path::Path, debug: bool) -> Result<Main, ParseErr> {
-    let mut global = Scope::new(vec![], HashMap::new());
+    let mut global = Scope::new();
     global.set_file(file.into(), std::fs::read_to_string(&file).unwrap());
 
     let file = global.file_as_str().to_owned();
@@ -279,6 +279,8 @@ fn parse_if(i: impl ToIf, scope: &mut Scope) -> Expr {
     
     if err_found {
         Expr::Err
+    } else if i.is_elif() {
+        Expr::Elif { cmp, exprs, elif, context: i.get_Ctx() }
     } else {
         Expr::If { cmp, exprs, elif, context: i.get_Ctx() }
     }
@@ -1021,6 +1023,8 @@ pub trait ToIf {
     fn get_Else(&self) -> Option<nodes::Else>;
 
     fn get_Ctx(&self) -> String;
+
+    fn is_elif(&self) -> bool;
 }
 
 impl ToIf for nodes::If<'_> {
@@ -1043,6 +1047,10 @@ impl ToIf for nodes::If<'_> {
     fn get_Ctx(&self) -> String {
         self.text().into()
     }
+
+    fn is_elif(&self) -> bool {
+        false
+    }
 }
 
 impl ToIf for nodes::Elif<'_> {
@@ -1064,5 +1072,9 @@ impl ToIf for nodes::Elif<'_> {
 
     fn get_Ctx(&self) -> String {
         self.text().into()
+    }
+
+    fn is_elif(&self) -> bool {
+        true
     }
 }

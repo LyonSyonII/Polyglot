@@ -1,9 +1,10 @@
+fn print(a: str) end
+
+
 if true
     print("a")
     var purr = "b"
-elif true
-    var arst = 5
-else => print("none")
+else end
 
 
 

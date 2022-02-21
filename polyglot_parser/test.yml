@@ -1,17 +1,29 @@
 ---
-- Init:
-    name: a
-    type:
-      List: Bool
-    value:
-      Op:
-        op:
-          Add:
-            - List:
-                - Bool:
-                    Primitive: true
-            - Int: 5
-        range:
-          start: 8
-          end: 18
-    context: "var a = [true] + 5"
+- Fn:
+    name: print
+    type: Void
+    args:
+      - - a
+        - Str
+    exprs: []
+    context: "fn print(a: str) end"
+- If:
+    cmp:
+      Bool:
+        Primitive: true
+    exprs:
+      - Call:
+          name: print
+          args:
+            - Str: a
+      - Init:
+          name: purr
+          type: Str
+          value:
+            Str: b
+          context: "var purr = \"b\""
+    elif:
+      Else:
+        exprs: []
+        context: else end
+    context: "if true\n    print(\"a\")\n    var purr = \"b\"\nelse end"
