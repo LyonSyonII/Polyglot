@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 
 use std::collections::HashMap;
+use std::ops::Range;
 use std::sync::atomic::AtomicBool;
 use std::sync::Mutex;
 
@@ -584,22 +585,22 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
         match op.to_enum() {
             duplicate! {
                 [
-                    node   msg;
-                    [Add]  ["add"]; 
-                    [Sub]  ["substract"]; 
-                    [Div]  ["divide"];
-                    [Mod]  ["modulo"]; 
-                    [Mul]  ["multiply"]; 
-                    [Pow]  ["power"]; 
+                    __node__    __msg__;
+                    [Add]       ["add"];
+                    [Sub]       ["substract"];
+                    [Div]       ["divide"];
+                    [Mod]       ["modulo"];
+                    [Mul]       ["multiply"];
+                    [Pow]       ["power"];
                 ]
                 
-                nodes::OpChildren::node(v) => {
+                nodes::OpChildren::__node__(v) => {
                     let lhs = parse_value(&v.get_Lhs(), scope);
                     let rhs = parse_value(&v.get_Value(), scope);
-    
+
                     let lhs_t = parse_type_from_value(&lhs, scope);
                     let rhs_t = parse_type_from_value(&rhs, scope);
-                    
+
                     let same_types = if lhs_t == rhs_t {
                         true
                     } else if let Type::List(list) = lhs_t {
@@ -608,8 +609,8 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
                         } else {
                             printerr(
                                 &(op.span().start()..op.span().end()),
-                                format!("cannot {} values of different types", msg),
-                                format!("cannot {} '{list}' to '{rhs_t}'", msg),
+                                format!("cannot {} values of different types", __msg__),
+                                format!("cannot {} '{list}' to '{rhs_t}'", __msg__),
                                 scope,
                             )
                             ._false()
@@ -617,15 +618,15 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
                     } else {
                         printerr(
                             &(op.span().start()..op.span().end()),
-                            format!("cannot {} values of different types", msg),
-                            format!("cannot {} '{lhs_t}' to '{rhs_t}'", msg),
+                            format!("cannot {} values of different types", __msg__),
+                            format!("cannot {} '{lhs_t}' to '{rhs_t}'", __msg__),
                             scope,
                         )
                         ._false()
                     };
-    
+
                     if same_types {
-                        Op::node(Box::new((lhs, rhs)))
+                        Op::__node__(Box::new((lhs, rhs)))
                     } else {
                         return Value::Err;
                     }
@@ -779,78 +780,10 @@ fn parse_type_from_value(value: &Value, scope: &Scope) -> Type {
         }
         Value::TupleAccess {
             name,
-            access_mode: access_type,
+            access_mode,
             name_range,
             access_range,
-        } => {
-            let tuple_t = if let Some(ty) = scope.get(name) {
-                ty.clone()
-            } else {
-                return printerr(name_range, "accessed invalid tuple/struct", "struct does not exist", scope)
-                    .type_err();
-            };
-
-            match access_type {
-                TupleAccessMode::Member(member) => {
-                    let mut struct_t = if let Type::Struct(t) = tuple_t {
-                        t
-                    } else {
-                        return printerr(
-                            access_range,
-                            "accessed tuple by member name",
-                            format!("use index instead: {name}.0"),
-                            scope,
-                        )
-                        .type_err();
-                    };
-
-                    struct_t.sort_unstable();
-                    if let Ok(ty) = struct_t.binary_search_by_key(&member, |(a, _)| a) {
-                        struct_t[ty].1.clone()
-                    } else {
-                        printerr(
-                            access_range,
-                            format!("member '{name}.{member}' does not exist"),
-                            "not declared",
-                            scope,
-                        );
-                        Type::Err
-                    }
-                }
-                TupleAccessMode::Index(index) => {
-                    let tuple_t = if let Type::Tuple(t) = tuple_t {
-                        t
-                    } else {
-                        return printerr(
-                            access_range,
-                            "accessed struct by index",
-                            format!("use member name instead: {name}.member"),
-                            scope,
-                        )
-                        .type_err();
-                    };
-
-                    if let Some(ty) = tuple_t.get(*index) {
-                        ty.clone()
-                    } else {
-                        let n_elems = tuple_t.len();
-                        let n_elems = if n_elems > 1 {
-                            format!("{} elements", n_elems)
-                        } else {
-                            "1 element".into()
-                        };
-
-                        printerr(
-                            &(name_range.start..access_range.end),
-                            "index out of bounds",
-                            format!("tuple has {n_elems}, trying to access element number {}", index + 1),
-                            scope,
-                        )
-                        .type_err()
-                    }
-                }
-            }
-        }
+        } => parse_type_from_tuple_access(name, access_mode, name_range, access_range, scope),
         Value::ListAccess { access_type, .. } => access_type.clone(),
         Value::Op { op, range } => match op {
             Op::Add(v) | Op::Sub(v) | Op::Mul(v) | Op::Div(v) | Op::Mod(v) | Op::Pow(v) => {
@@ -869,6 +802,76 @@ fn parse_type_from_value(value: &Value, scope: &Scope) -> Type {
         Value::Call { name, args } => scope.get_fn_type(name),
         Value::RetExpr(_) => todo!(),
         Value::Err => Type::Err,
+    }
+}
+
+fn parse_type_from_tuple_access(
+    name: &str,
+    access_type: &TupleAccessMode,
+    name_range: &Range<usize>,
+    access_range: &Range<usize>,
+    scope: &Scope,
+) -> Type {
+    let tuple_t = if let Some(ty) = scope.get(name) {
+        ty.clone()
+    } else {
+        return printerr(name_range, "accessed invalid tuple/struct", "struct does not exist", scope).type_err();
+    };
+
+    match access_type {
+        TupleAccessMode::Member(member) => {
+            let mut struct_t = if let Type::Struct(t) = tuple_t {
+                t
+            } else {
+                return printerr(
+                    access_range,
+                    "accessed tuple by member name",
+                    format!("use index instead: {name}.0"),
+                    scope,
+                )
+                .type_err();
+            };
+
+            struct_t.sort_unstable();
+            if let Ok(ty) = struct_t.binary_search_by_key(&member, |(a, _)| a) {
+                struct_t[ty].1.clone()
+            } else {
+                printerr(access_range, format!("member '{name}.{member}' does not exist"), "not declared", scope);
+                Type::Err
+            }
+        }
+        TupleAccessMode::Index(index) => {
+            let tuple_t = if let Type::Tuple(t) = tuple_t {
+                t
+            } else {
+                return printerr(
+                    access_range,
+                    "accessed struct by index",
+                    format!("use member name instead: {name}.member"),
+                    scope,
+                )
+                .type_err();
+            };
+
+            if let Some(ty) = tuple_t.get(*index) {
+                ty.clone()
+            } else {
+                let n_elems = tuple_t.len();
+                let n_elems = if n_elems > 1 {
+                    format!("{} elements", n_elems)
+                } else {
+                    "1 element".into()
+                };
+
+                printerr(
+                    &(name_range.start..access_range.end),
+                    "index out of bounds",
+                    format!("tuple has {n_elems}, trying to access element number {}", index + 1),
+                    scope,
+                )
+                .type_err()
+            }
+        }
     }
 }
 
@@ -914,39 +917,21 @@ pub trait GetRange {
     fn range(&self) -> std::ops::Range<usize>;
 }
 
-impl GetRange for crate::parser::nodes::Value<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
-    }
-}
+duplicate! {
+    [
+        node;
+        [Value];
+        [Type];
+        [Name];
+        [TupleAccess];
+        [TupleAccessType];
+        [Cmp];
+    ]
 
-impl GetRange for nodes::Type<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
-    }
-}
-
-impl GetRange for nodes::Name<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
-    }
-}
-
-impl GetRange for nodes::TupleAccess<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
-    }
-}
-
-impl GetRange for nodes::TupleAccessType<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start() - 1..self.span().end()
-    }
-}
-
-impl GetRange for nodes::Cmp<'_> {
-    fn range(&self) -> std::ops::Range<usize> {
-        self.span().start()..self.span().end()
+    impl GetRange for crate::parser::nodes::node<'_> {
+        fn range(&self) -> std::ops::Range<usize> {
+            self.span().start()..self.span().end()
+        }
     }
 }
 
@@ -1005,6 +990,7 @@ impl NameNodeUtils for nodes::Name<'_> {
     }
 }
 
+#[allow(non_snake_case)]
 pub trait ToIf {
     fn get_Value(&self) -> nodes::Value;
 
@@ -1019,54 +1005,36 @@ pub trait ToIf {
     fn is_elif(&self) -> bool;
 }
 
-impl ToIf for nodes::If<'_> {
-    fn get_Value(&self) -> nodes::Value {
-        self.get_Value()
-    }
+duplicate! {
+    [
+        node    elif;
+        [If]    [false];
+        [Elif]  [true];
+    ]
 
-    fn list_Expr(&self) -> Vec<nodes::Expr> {
-        self.list_Expr().collect()
-    }
+    impl ToIf for nodes::node<'_> {
+        fn get_Value(&self) -> nodes::Value {
+            self.get_Value()
+        }
 
-    fn get_Elif(&self) -> Option<nodes::Elif> {
-        self.list_Elif().next()
-    }
+        fn list_Expr(&self) -> Vec<nodes::Expr> {
+            self.list_Expr().collect()
+        }
 
-    fn get_Else(&self) -> Option<nodes::Else> {
-        self.list_Else().next()
-    }
+        fn get_Elif(&self) -> Option<nodes::Elif> {
+            self.list_Elif().next()
+        }
 
-    fn get_Ctx(&self) -> String {
-        self.text().into()
-    }
+        fn get_Else(&self) -> Option<nodes::Else> {
+            self.list_Else().next()
+        }
 
-    fn is_elif(&self) -> bool {
-        false
-    }
-}
+        fn get_Ctx(&self) -> String {
+            self.text().into()
+        }
 
-impl ToIf for nodes::Elif<'_> {
-    fn get_Value(&self) -> nodes::Value {
-        self.get_Value()
-    }
-
-    fn list_Expr(&self) -> Vec<nodes::Expr> {
-        self.list_Expr().collect()
-    }
-
-    fn get_Elif(&self) -> Option<nodes::Elif> {
-        self.list_Elif().next()
-    }
-
-    fn get_Else(&self) -> Option<nodes::Else> {
-        self.list_Else().next()
-    }
-
-    fn get_Ctx(&self) -> String {
-        self.text().into()
-    }
-
-    fn is_elif(&self) -> bool {
-        true
+        fn is_elif(&self) -> bool {
+            elif
+        }
     }
 }
