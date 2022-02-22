@@ -1,1 +1,1 @@
-var a = !false > true
+var a = false % "a"

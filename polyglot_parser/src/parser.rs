@@ -579,62 +579,64 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
             ._false()
         }
     };
-    Value::Op {
-        op: match op.to_enum() {
-            nodes::OpChildren::Add(a) => {
-                let lhs = parse_value(&a.get_Lhs(), scope);
-                let rhs = parse_value(&a.get_Value(), scope);
-
-                let lhs_t = parse_type_from_value(&lhs, scope);
-                let rhs_t = parse_type_from_value(&rhs, scope);
-
-                let same_types = if lhs_t == rhs_t {
-                    true
-                } else if let Type::List(list) = lhs_t {
-                    if rhs_t == *list {
+    let span = op.span();
+    let op = duplicate! { [_[_]]
+        match op.to_enum() {
+            duplicate! {
+                [
+                    node   msg;
+                    [Add]  ["add"]; 
+                    [Sub]  ["substract"]; 
+                    [Div]  ["divide"];
+                    [Mod]  ["modulo"]; 
+                    [Mul]  ["multiply"]; 
+                    [Pow]  ["power"]; 
+                ]
+                
+                nodes::OpChildren::node(v) => {
+                    let lhs = parse_value(&v.get_Lhs(), scope);
+                    let rhs = parse_value(&v.get_Value(), scope);
+    
+                    let lhs_t = parse_type_from_value(&lhs, scope);
+                    let rhs_t = parse_type_from_value(&rhs, scope);
+                    
+                    let same_types = if lhs_t == rhs_t {
                         true
+                    } else if let Type::List(list) = lhs_t {
+                        if rhs_t == *list {
+                            true
+                        } else {
+                            printerr(
+                                &(op.span().start()..op.span().end()),
+                                format!("cannot {} values of different types", msg),
+                                format!("cannot {} '{list}' to '{rhs_t}'", msg),
+                                scope,
+                            )
+                            ._false()
+                        }
                     } else {
                         printerr(
                             &(op.span().start()..op.span().end()),
-                            "cannot add values of different types",
-                            format!("cannot add '{list}' to '{rhs_t}'"),
+                            format!("cannot {} values of different types", msg),
+                            format!("cannot {} '{lhs_t}' to '{rhs_t}'", msg),
                             scope,
                         )
                         ._false()
+                    };
+    
+                    if same_types {
+                        Op::node(Box::new((lhs, rhs)))
+                    } else {
+                        return Value::Err;
                     }
-                } else {
-                    printerr(
-                        &(op.span().start()..op.span().end()),
-                        "cannot add values of different types",
-                        format!("cannot add '{lhs_t}' to '{rhs_t}'"),
-                        scope,
-                    )
-                    ._false()
-                };
-
-                if same_types {
-                    Op::Add(Box::new((lhs, rhs)))
-                } else {
-                    return Value::Err;
                 }
             }
-            nodes::OpChildren::Sub(s) => {
-                Op::Sub(Box::new((parse_value(&s.get_Lhs(), scope), parse_value(&s.get_Value(), scope))))
-            }
-            nodes::OpChildren::Mul(mul) => {
-                Op::Mul(Box::new((parse_value(&mul.get_Lhs(), scope), parse_value(&mul.get_Value(), scope))))
-            }
-            nodes::OpChildren::Div(d) => {
-                Op::Div(Box::new((parse_value(&d.get_Lhs(), scope), parse_value(&d.get_Value(), scope))))
-            }
-            nodes::OpChildren::Mod(m) => {
-                Op::Mod(Box::new((parse_value(&m.get_Lhs(), scope), parse_value(&m.get_Value(), scope))))
-            }
-            nodes::OpChildren::Pow(p) => {
-                Op::Pow(Box::new((parse_value(&p.get_Lhs(), scope), parse_value(&p.get_Value(), scope))))
-            }
-        },
-        range: op.span().start()..op.span().end(),
+        }
+    };
+
+    Value::Op {
+        op,
+        range: span.start()..span.end(),
     }
 }
 

@@ -1,16 +1,2 @@
 ---
-- Init:
-    name: a
-    type: Bool
-    value:
-      Bool:
-        Cmp:
-          Not:
-            Bool:
-              Cmp:
-                Greater:
-                  - Bool:
-                      Primitive: false
-                  - Bool:
-                      Primitive: true
-    context: var a = !false > true
+- Err
