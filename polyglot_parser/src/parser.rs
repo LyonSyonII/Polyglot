@@ -109,7 +109,7 @@ fn parse_init(init: nodes::Init, scope: &mut Scope) -> Expr {
     if parsed_v == Value::Err {
         return Expr::Err;
     }
-
+    
     let ty = match init.get_Type() {
         // Check if variable is of the same type as assignment
         Some(node_t) => {

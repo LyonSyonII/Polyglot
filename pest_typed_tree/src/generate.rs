@@ -341,6 +341,10 @@ fn generate_rule_struct(rule: Rule) -> TokenStream {
             pub fn pairs(&self) -> Pairs<'i, Rule> {
                self.0.clone().into_inner()
             }
+
+            pub fn pair(&self) -> Pair<'i, Rule> {
+            	self.0.clone()
+            }
         }
     };
 
