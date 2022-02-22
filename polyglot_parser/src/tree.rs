@@ -45,7 +45,7 @@ pub enum Expr {
         cmp: Value,
         exprs: Vec<Expr>,
         elif: Option<Box<Expr>>,
-        context: String
+        context: String,
     },
     Else {
         exprs: Vec<Expr>,

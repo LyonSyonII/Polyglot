@@ -7,6 +7,7 @@ use std::sync::Mutex;
 
 use crate::tree::*;
 use clap::Parser as P;
+use ct_for::ct_for;
 use duplicate::duplicate;
 use either::Either;
 use inner::inner;
@@ -110,7 +111,7 @@ fn parse_init(init: nodes::Init, scope: &mut Scope) -> Expr {
     if parsed_v == Value::Err {
         return Expr::Err;
     }
-    
+
     let ty = match init.get_Type() {
         // Check if variable is of the same type as assignment
         Some(node_t) => {
@@ -269,17 +270,29 @@ fn parse_if(i: impl ToIf, scope: &mut Scope) -> Expr {
         err_found = err_found || expr == Expr::Err;
         exprs.push(expr);
     }
-    
+
     let elif = if let Some(elif) = i.get_Elif() {
         Some(Box::new(parse_if(elif, scope)))
-    } else { i.get_Else().map(|els| Box::new(parse_else(els, scope))) };
-    
+    } else {
+        i.get_Else().map(|els| Box::new(parse_else(els, scope)))
+    };
+
     if err_found {
         Expr::Err
     } else if i.is_elif() {
-        Expr::Elif { cmp, exprs, elif, context: i.get_Ctx() }
+        Expr::Elif {
+            cmp,
+            exprs,
+            elif,
+            context: i.get_Ctx(),
+        }
     } else {
-        Expr::If { cmp, exprs, elif, context: i.get_Ctx() }
+        Expr::If {
+            cmp,
+            exprs,
+            elif,
+            context: i.get_Ctx(),
+        }
     }
 }
 
@@ -294,7 +307,10 @@ fn parse_else(e: nodes::Else, scope: &mut Scope) -> Expr {
         exprs.push(expr);
     }
 
-    Expr::Else { exprs, context: e.text().into() }
+    Expr::Else {
+        exprs,
+        context: e.text().into(),
+    }
 }
 
 fn parse_fn(f: nodes::Fn, scope: &mut Scope) -> Expr {
@@ -550,13 +566,18 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
     let same_types = |lhs, rhs| -> bool {
         let lhs_t = parse_type_from_value(lhs, scope);
         let rhs_t = parse_type_from_value(rhs, scope);
-        
+
         if lhs_t == rhs_t {
             true
+        } else {
+            printerr(
+                &(op.span().start()..op.span().end()),
+                "cannot add values of different types",
+                format!("cannot add '{lhs_t}' to '{rhs_t}'"),
+                scope,
+            )
+            ._false()
         }
-        else {
-            printerr(&(op.span().start()..op.span().end()), "cannot add values of different types", format!("cannot add '{lhs_t}' to '{rhs_t}'"), scope)._false()
-        } 
     };
     Value::Op {
         op: match op.to_enum() {
@@ -566,23 +587,35 @@ fn parse_value_op(op: nodes::Op, scope: &Scope) -> Value {
 
                 let lhs_t = parse_type_from_value(&lhs, scope);
                 let rhs_t = parse_type_from_value(&rhs, scope);
-                
+
                 let same_types = if lhs_t == rhs_t {
                     true
                 } else if let Type::List(list) = lhs_t {
-                    if rhs_t == *list { true }
-                    else {
-                        printerr(&(op.span().start()..op.span().end()), "cannot add values of different types", format!("cannot add '{list}' to '{rhs_t}'"), scope)._false()
+                    if rhs_t == *list {
+                        true
+                    } else {
+                        printerr(
+                            &(op.span().start()..op.span().end()),
+                            "cannot add values of different types",
+                            format!("cannot add '{list}' to '{rhs_t}'"),
+                            scope,
+                        )
+                        ._false()
                     }
-                } 
-                else {
-                    printerr(&(op.span().start()..op.span().end()), "cannot add values of different types", format!("cannot add '{lhs_t}' to '{rhs_t}'"), scope)._false()
+                } else {
+                    printerr(
+                        &(op.span().start()..op.span().end()),
+                        "cannot add values of different types",
+                        format!("cannot add '{lhs_t}' to '{rhs_t}'"),
+                        scope,
+                    )
+                    ._false()
                 };
-                
+
                 if same_types {
                     Op::Add(Box::new((lhs, rhs)))
                 } else {
-                    return Value::Err
+                    return Value::Err;
                 }
             }
             nodes::OpChildren::Sub(s) => {
@@ -641,46 +674,43 @@ fn parse_value_cmp(cmp: nodes::Cmp, scope: &Scope) -> Cmp {
         }
     };
 
-    let cmp = cmp.to_enum();
-    
-    duplicate! {
-        [
-            node        comp;
-            [Less]      [Less];
-            [Great]     [Greater];
-            [LessEq]    [LessEq];
-            [GreatEq]   [GreatEq];
-            [NotEq]     [NotEq];
-        ]
-        
-        if let nodes::CmpChildren::node(v) = cmp {
-            let lhs = parse_value(&v.get_Lhs(), scope);
-            let rhs = parse_value(&v.get_Value(), scope);
-            if can_cmp(&lhs, &rhs) {
-                return Cmp::comp(Box::new((lhs, rhs)))
-            } else {
-                return Cmp::Err
+    duplicate! { [_[_]]
+            match cmp.to_enum() {
+                duplicate! {
+                    [
+                        node        comp;
+                        [Less]      [Less];
+                        [Great]     [Greater];
+                        [LessEq]    [LessEq];
+                        [GreatEq]   [GreatEq];
+                        [Equal]     [Equal];
+                        [NotEq]     [NotEq];
+                    ]
+
+                    nodes::CmpChildren::node(v) => {
+                        let lhs = parse_value(&v.get_Lhs(), scope);
+                        let rhs = parse_value(&v.get_Value(), scope);
+                        if can_cmp(&lhs, &rhs) {
+                            Cmp::comp(Box::new((lhs, rhs)))
+                        } else {
+                            Cmp::Err
+                        }
+                    },
+                }
+
+                nodes::CmpChildren::Not(n) => {
+                    let lhs = parse_value(&n.get_Value(), scope);
+                    let lhs_t = parse_type_from_value(&lhs, scope);
+                    if lhs_t == Type::Bool {
+                        Cmp::Not(Box::new(lhs))
+                    } else if lhs_t != Type::Err {
+                        let span = n.span();
+                        printerr(&(span.start()..span.end()), "wrong negation type", format!("type '{lhs_t}' can't be negated"), scope).cmp_err()
+                    } else {
+                        Cmp::Err
+                    }
             }
         }
-    }
-    if let nodes::CmpChildren::Not(n) = cmp {
-        let lhs = parse_value(&n.get_Value(), scope);
-        let lhs_t = parse_type_from_value(&lhs, scope);
-        if lhs_t == Type::Bool {
-            Cmp::Not(Box::new(lhs))
-        } else if lhs_t != Type::Err {
-            return printerr(
-                &(n.span().start()..n.span().end()),
-                "wrong negation type",
-                format!("type '{lhs_t}' can't be negated"),
-                scope,
-            )
-            .cmp_err()
-        } else {
-            Cmp::Err
-        }
-    } else {
-        unreachable!()
     }
 }
 
@@ -932,24 +962,33 @@ impl ToValueEnum for nodes::Lhs<'_> {
     fn to_value_enum(&self) -> nodes::ValueChildren<'_> {
         use nodes::LhsChildren;
         use nodes::ValueChildren;
-        
-        match self.to_enum() {
-            LhsChildren::Name(n) => ValueChildren::Name(n),
-            LhsChildren::Char(c) => ValueChildren::Char(c),
-            LhsChildren::Bool(b) => ValueChildren::Bool(b),
-            LhsChildren::TupleAccess(ta) => ValueChildren::TupleAccess(ta),
-            LhsChildren::Str(s) => ValueChildren::Str(s),
-            LhsChildren::Int(i) => ValueChildren::Int(i),
-            LhsChildren::Call(c) => ValueChildren::Call(c),
-            LhsChildren::Tuple(t) => ValueChildren::Tuple(t),
-            LhsChildren::Num(n) => ValueChildren::Num(n),
-            LhsChildren::Struct(s) => ValueChildren::Struct(s),
-            LhsChildren::Dict(d) => ValueChildren::Dict(d),
-            LhsChildren::List(l) => ValueChildren::List(l),
-            LhsChildren::ListAccess(la) => ValueChildren::ListAccess(la),
-            LhsChildren::Parenthesis(p) => ValueChildren::Parenthesis(p),
-            LhsChildren::TypeConversion(tc) => todo!(),
-            LhsChildren::ModuleAccess(ma) => todo!(),
+
+        duplicate! { [_[_]]
+            match self.to_enum() {
+                duplicate! {
+                    [
+                        val;
+                        [Name];
+                        [Char];
+                        [Bool];
+                        [TupleAccess];
+                        [Str];
+                        [Int];
+                        [Call];
+                        [Tuple];
+                        [Num];
+                        [Struct];
+                        [Dict];
+                        [List];
+                        [ListAccess];
+                        [Parenthesis];
+                        [TypeConversion];
+                        [ModuleAccess];
+                    ]
+
+                    LhsChildren::val(v) => ValueChildren::val(v),
+                }
+            }
         }
     }
 }
@@ -966,11 +1005,11 @@ impl NameNodeUtils for nodes::Name<'_> {
 
 pub trait ToIf {
     fn get_Value(&self) -> nodes::Value;
-    
+
     fn list_Expr(&self) -> Vec<nodes::Expr>;
-    
+
     fn get_Elif(&self) -> Option<nodes::Elif>;
-    
+
     fn get_Else(&self) -> Option<nodes::Else>;
 
     fn get_Ctx(&self) -> String;
@@ -982,15 +1021,15 @@ impl ToIf for nodes::If<'_> {
     fn get_Value(&self) -> nodes::Value {
         self.get_Value()
     }
-    
+
     fn list_Expr(&self) -> Vec<nodes::Expr> {
         self.list_Expr().collect()
     }
-    
+
     fn get_Elif(&self) -> Option<nodes::Elif> {
         self.list_Elif().next()
     }
-    
+
     fn get_Else(&self) -> Option<nodes::Else> {
         self.list_Else().next()
     }
@@ -1008,15 +1047,15 @@ impl ToIf for nodes::Elif<'_> {
     fn get_Value(&self) -> nodes::Value {
         self.get_Value()
     }
-    
+
     fn list_Expr(&self) -> Vec<nodes::Expr> {
         self.list_Expr().collect()
     }
-    
+
     fn get_Elif(&self) -> Option<nodes::Elif> {
         self.list_Elif().next()
     }
-    
+
     fn get_Else(&self) -> Option<nodes::Else> {
         self.list_Else().next()
     }
