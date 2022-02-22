@@ -932,7 +932,7 @@ impl ToValueEnum for nodes::Lhs<'_> {
     fn to_value_enum(&self) -> nodes::ValueChildren<'_> {
         use nodes::LhsChildren;
         use nodes::ValueChildren;
-
+        
         match self.to_enum() {
             LhsChildren::Name(n) => ValueChildren::Name(n),
             LhsChildren::Char(c) => ValueChildren::Char(c),
