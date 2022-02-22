@@ -186,6 +186,7 @@ pub struct Fn {
     pub args: Vec<Type>,
 }
 
+#[derive(Default)]
 pub struct Scope {
     vars: std::collections::HashMap<String, Type>,
     funcs: std::collections::HashMap<String, Fn>,
@@ -249,14 +250,6 @@ impl std::fmt::Display for Type {
 }
 
 impl Scope {
-    pub fn new() -> Scope {
-        Scope {
-            vars: HashMap::new(),
-            file: (String::new(), PathBuf::new()),
-            funcs: HashMap::new(),
-        }
-    }
-
     pub fn get_fn(&self, name: &str) -> Option<&Fn> {
         self.funcs.get(name)
     }
@@ -321,12 +314,12 @@ pub trait OpUtils {
 impl OpUtils for Op {
     fn set_value(self, lhs: Value, rhs: Value) -> Op {
         match self {
-            Op::Add(a) => Op::Add(Box::new((lhs, rhs))),
-            Op::Sub(a) => Op::Sub(Box::new((lhs, rhs))),
-            Op::Mul(a) => Op::Mul(Box::new((lhs, rhs))),
-            Op::Div(a) => Op::Div(Box::new((lhs, rhs))),
-            Op::Mod(a) => Op::Mod(Box::new((lhs, rhs))),
-            Op::Pow(a) => Op::Pow(Box::new((lhs, rhs))),
+            Op::Add(_) => Op::Add(Box::new((lhs, rhs))),
+            Op::Sub(_) => Op::Sub(Box::new((lhs, rhs))),
+            Op::Mul(_) => Op::Mul(Box::new((lhs, rhs))),
+            Op::Div(_) => Op::Div(Box::new((lhs, rhs))),
+            Op::Mod(_) => Op::Mod(Box::new((lhs, rhs))),
+            Op::Pow(_) => Op::Pow(Box::new((lhs, rhs))),
             _ => unreachable!(),
         }
     }

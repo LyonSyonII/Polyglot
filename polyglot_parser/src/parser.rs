@@ -7,6 +7,7 @@ use std::sync::Mutex;
 
 use crate::tree::*;
 use clap::Parser as P;
+use duplicate::duplicate;
 use either::Either;
 use inner::inner;
 use pest::iterators::{Pair, Pairs};
@@ -19,7 +20,7 @@ use show_my_errors::{AnnotationList, Stylesheet};
 pub struct Parser;
 
 pub fn parse(file: &std::path::Path, debug: bool) -> Result<Main, ParseErr> {
-    let mut global = Scope::new();
+    let mut global = Scope::default();
     global.set_file(file.into(), std::fs::read_to_string(&file).unwrap());
 
     let file = global.file_as_str().to_owned();
@@ -271,11 +272,7 @@ fn parse_if(i: impl ToIf, scope: &mut Scope) -> Expr {
     
     let elif = if let Some(elif) = i.get_Elif() {
         Some(Box::new(parse_if(elif, scope)))
-    } else if let Some(els) = i.get_Else() {
-        Some(Box::new(parse_else(els, scope)))
-    } else {
-        None
-    };
+    } else { i.get_Else().map(|els| Box::new(parse_else(els, scope))) };
     
     if err_found {
         Expr::Err
@@ -643,93 +640,47 @@ fn parse_value_cmp(cmp: nodes::Cmp, scope: &Scope) -> Cmp {
             ._false()
         }
     };
-    // TODO! Errors for all conditions
-    match cmp.to_enum() {
-        nodes::CmpChildren::Less(l) => {
-            let lhs = parse_value(&l.get_Lhs(), scope);
-            let rhs = parse_value(&l.get_Value(), scope);
+
+    let cmp = cmp.to_enum();
+    
+    duplicate! {
+        [
+            node        comp;
+            [Less]      [Less];
+            [Great]     [Greater];
+            [LessEq]    [LessEq];
+            [GreatEq]   [GreatEq];
+            [NotEq]     [NotEq];
+        ]
+        
+        if let nodes::CmpChildren::node(v) = cmp {
+            let lhs = parse_value(&v.get_Lhs(), scope);
+            let rhs = parse_value(&v.get_Value(), scope);
             if can_cmp(&lhs, &rhs) {
-                Cmp::Less(Box::new((lhs, rhs)))
+                return Cmp::comp(Box::new((lhs, rhs)))
             } else {
-                Cmp::Err
+                return Cmp::Err
             }
         }
-        nodes::CmpChildren::Great(g) => {
-            let lhs = parse_value(&g.get_Lhs(), scope);
-            let rhs = parse_value(&g.get_Value(), scope);
-            if can_cmp(&lhs, &rhs) {
-                Cmp::Greater(Box::new((lhs, rhs)))
-            } else {
-                Cmp::Err
-            }
+    }
+    if let nodes::CmpChildren::Not(n) = cmp {
+        let lhs = parse_value(&n.get_Value(), scope);
+        let lhs_t = parse_type_from_value(&lhs, scope);
+        if lhs_t == Type::Bool {
+            Cmp::Not(Box::new(lhs))
+        } else if lhs_t != Type::Err {
+            return printerr(
+                &(n.span().start()..n.span().end()),
+                "wrong negation type",
+                format!("type '{lhs_t}' can't be negated"),
+                scope,
+            )
+            .cmp_err()
+        } else {
+            Cmp::Err
         }
-        nodes::CmpChildren::LessEq(le) => {
-            let lhs = parse_value(&le.get_Lhs(), scope);
-            let rhs = parse_value(&le.get_Value(), scope);
-            if can_cmp(&lhs, &rhs) {
-                Cmp::LessEq(Box::new((lhs, rhs)))
-            } else {
-                Cmp::Err
-            }
-        }
-        nodes::CmpChildren::GreatEq(ge) => {
-            let lhs = parse_value(&ge.get_Lhs(), scope);
-            let rhs = parse_value(&ge.get_Value(), scope);
-            if can_cmp(&lhs, &rhs) {
-                Cmp::GreatEq(Box::new((lhs, rhs)))
-            } else {
-                Cmp::Err
-            }
-        }
-        nodes::CmpChildren::Equal(eq) => {
-            let lhs = parse_value(&eq.get_Lhs(), scope);
-            let rhs = parse_value(&eq.get_Value(), scope);
-            if can_cmp(&lhs, &rhs) {
-                Cmp::Equal(Box::new((lhs, rhs)))
-            } else {
-                Cmp::Err
-            }
-        }
-        nodes::CmpChildren::NotEq(neq) => {
-            let lhs = parse_value(&neq.get_Lhs(), scope);
-            let rhs = parse_value(&neq.get_Value(), scope);
-            if can_cmp(&lhs, &rhs) {
-                Cmp::NotEq(Box::new((lhs, rhs)))
-            } else {
-                Cmp::Err
-            }
-        }
-        nodes::CmpChildren::Not(n) => {
-            let lhs = parse_value(&n.get_Value(), scope);
-            let lhs_t = parse_type_from_value(&lhs, scope);
-            if lhs_t == Type::Bool {
-                Cmp::Not(Box::new(lhs))
-            } else if lhs_t != Type::Err {
-                printerr(
-                    &(n.span().start()..n.span().end()),
-                    "wrong negation type",
-                    format!("type '{lhs_t}' can't be negated"),
-                    scope,
-                )
-                .cmp_err()
-            } else {
-                Cmp::Err
-            }
-        } /*
-          nodes::CmpChildren::Name(name) => {
-              let var = name.to_string();
-              if let Some(var_t) = scope.get(&var) {
-                  if *var_t == Type::Bool {
-                      Cmp::Name(var)
-                  } else {
-                      printerr(&name.range(), "wrong comparison type", format!("expected 'bool', found {var_t})"), scope).cmp_err()
-                  }
-              } else {
-                  printerr(&name.range(), "comparison with inexistent variable", "not declared", scope).cmp_err()
-              }
-          }
-          nodes::CmpChildren::Bool(b) => Cmp::Bool(b.text() == "true"),
-          */
+    } else {
+        unreachable!()
     }
 }
 

@@ -1,29 +1,16 @@
 ---
-- Fn:
-    name: print
-    type: Void
-    args:
-      - - a
-        - Str
-    exprs: []
-    context: "fn print(a: str) end"
-- If:
-    cmp:
+- Init:
+    name: a
+    type: Bool
+    value:
       Bool:
-        Primitive: true
-    exprs:
-      - Call:
-          name: print
-          args:
-            - Str: a
-      - Init:
-          name: purr
-          type: Str
-          value:
-            Str: b
-          context: "var purr = \"b\""
-    elif:
-      Else:
-        exprs: []
-        context: else end
-    context: "if true\n    print(\"a\")\n    var purr = \"b\"\nelse end"
+        Cmp:
+          Not:
+            Bool:
+              Cmp:
+                Greater:
+                  - Bool:
+                      Primitive: false
+                  - Bool:
+                      Primitive: true
+    context: var a = !false > true
