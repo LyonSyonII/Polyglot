@@ -1,0 +1,5 @@
+greeting_kind = {"hi" | "hello"}
+
+greeting = {SOI ~ greeting_kind ~ name_reference ~ EOI}
+name_reference = {ANY*}
+WHITESPACE = {" "}

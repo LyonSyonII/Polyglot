@@ -1,0 +1,24 @@
+[package]
+name = "pest_typed_tree"
+version = "0.2.1"
+authors = ["Mikail Bagishov <bagishov.mikail@yandex.ru>"]
+edition = "2018"
+description = """
+Generates typed tree, based on grammar, allowing reduce .unwrap() count :)
+"""
+license = "MIT/Apache-2.0"
+repository = "https://github.com/mikailbag/pest-typed-tree"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+pest_meta = "2.1.2"
+syn = "1.0.8"
+quote = "1.0.2"
+heck = "0.3.1"
+proc-macro2 = "1.0.6"
+
+[dev-dependencies]
+pest_derive = "2.1.0"
+pest = "2.1.2"

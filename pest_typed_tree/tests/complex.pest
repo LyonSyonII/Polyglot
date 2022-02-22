@@ -1,0 +1,15 @@
+program = {SOI ~ definition* ~ EOI}
+
+ident_char = {'a'..'z'}
+ident = {ident_char+}
+WHITESPACE = _{" " | "\n"}
+
+num_head = {'1'..'9'}
+num_tail = {'0'..'9'}
+num = @{"0" | (num_head ~ num_tail*)}
+
+def_const = {"CONST" ~ ident ~ num}
+def_sum = {"SUM" ~ ident ~ num ~ num}
+def_opt = {"CONST_OPT" ~ ident ~ num?}
+
+definition = { def_const | def_sum | def_opt }

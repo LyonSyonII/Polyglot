@@ -1,0 +1,3 @@
+world = {"world"}
+
+hello_world = {SOI ~ "hello" ~ " "* ~ world ~ EOI}
