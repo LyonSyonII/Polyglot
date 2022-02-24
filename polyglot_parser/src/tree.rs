@@ -82,6 +82,7 @@ pub enum RetExpr {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Value {
+    Range((i64, i64)),
     Int(i64),
     Num(f64),
     Bool(Bool),
@@ -176,6 +177,7 @@ pub enum Cmp {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialOrd, Eq, Ord)]
 pub enum Type {
+    Range,
     Int,
     Num,
     Bool,
@@ -231,6 +233,7 @@ impl PartialEq for Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Type::Range => write!(f, "range"),
             Type::Int => write!(f, "int"),
             Type::Num => write!(f, "num"),
             Type::Bool => write!(f, "bool"),

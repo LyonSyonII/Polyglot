@@ -99,7 +99,7 @@ fn parse_expr(expr: nodes::Expr, scope: &mut Scope) -> Expr {
         }
         nodes::ExprChildren::If(i) => parse_if(i, scope),
         nodes::ExprChildren::For(f) => parse_for(f, scope),
-        nodes::ExprChildren::For(w) => parse_while(w, scope),
+        nodes::ExprChildren::While(w) => parse_while(w, scope),
         nodes::ExprChildren::Fn(f) => parse_fn(f, scope),
         nodes::ExprChildren::Call(c) => parse_call(c, scope),
     }
@@ -315,18 +315,57 @@ fn parse_else(e: nodes::Else, scope: &mut Scope) -> Expr {
 }
 
 fn parse_for(f: nodes::For, scope: &mut Scope) -> Expr {
-    let var = f.get_Name().to_string();
-    let for_scope = scope.clone_into_new_scope(new_scope_variables)
+    let mut names = f.list_Name();
+    let var = names.next().unwrap().to_string();
+    
+    let range_type;
+    let range = if let Some(n) = names.next() {
+        let range = Value::Var { name: n.to_string(), range: n.range() };
+        range_type = parse_type_from_value(&range, scope);
+        range
+    } else {
+        let r = f.list_Range().next().unwrap();
+        range_type = Type::Int;
+        Value::Range((r.get_first_Int().text().parse().unwrap(), r.get_second_Int().text().parse().unwrap()))
+    };
+    
+    let mut for_scope = scope.clone_into_new_scope(vec![(var.clone(), range_type)]);
+    
+    let mut err_found = false;
+    let mut exprs = Vec::new();
+    for expr in f.list_Expr() {
+        let expr = parse_expr(expr, &mut for_scope);
+        err_found = err_found || expr == Expr::Err;
 
-
-
-
-
-    Expr::For { var, range, exprs, context: f.text().into() }
+        exprs.push(expr);
+    }
+    
+    if err_found {
+        Expr::Err
+    } else {
+        Expr::For { var, range, exprs, context: f.text().into() }
+    }
 }
 
 fn parse_while(w: nodes::While, scope: &mut Scope) -> Expr {
+    let cmp = parse_value(&w.get_Value(), scope);
 
+    let mut while_scope = scope.clone_into_new_scope(Vec::new());
+    
+    let mut err_found = false;
+    let mut exprs = Vec::new();
+    for expr in w.list_Expr() {
+        let expr = parse_expr(expr, &mut while_scope);
+        err_found = err_found || expr == Expr::Err;
+
+        exprs.push(expr);
+    }
+    
+    if err_found {
+        Expr::Err
+    } else {
+        Expr::While { cmp, exprs, context: w.text().into() }
+    }
 }
 
 fn parse_fn(f: nodes::Fn, scope: &mut Scope) -> Expr {
@@ -404,6 +443,7 @@ fn parse_call(c: nodes::Call, scope: &Scope) -> Expr {
 
 fn parse_value(value: &impl ToValueEnum, scope: &Scope) -> Value {
     match value.to_value_enum() {
+        nodes::ValueChildren::Range(r) => Value::Range((r.get_first_Int().text().parse().unwrap(), r.get_second_Int().text().parse().unwrap())),
         nodes::ValueChildren::Int(i) => Value::Int(i.text().parse().unwrap()),
         nodes::ValueChildren::Num(n) => Value::Num(n.text().parse().unwrap()),
         nodes::ValueChildren::Bool(b) => Value::Bool(Bool::Primitive(b.text() == "true")),
@@ -762,6 +802,7 @@ fn parse_type(ty: &nodes::Type, scope: &Scope) -> Type {
 
 fn parse_type_from_value(value: &Value, scope: &Scope) -> Type {
     match value {
+        Value::Range(_) => Type::Range,
         Value::Int(_) => Type::Int,
         Value::Num(_) => Type::Num,
         Value::Bool(_) => Type::Bool,
@@ -967,6 +1008,7 @@ impl ToValueEnum for nodes::Lhs<'_> {
                 duplicate! {
                     [
                         val;
+                        [Range];
                         [Name];
                         [Char];
                         [Bool];
