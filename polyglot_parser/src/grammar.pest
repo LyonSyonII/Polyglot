@@ -12,7 +12,7 @@ CL = @{ ":" ~ WHITESPACE+ }
 KW = _{ "var" | "type" | "if" | "elif" | "else" | "match" | "int" | "num" | "bool" | "char" | "str" }
 COMMENT = _{ "//" ~ ANY+ | "/*" ~ (!"*\\" ~ ANY+) }
 // Expressions
-Expr = { (Use | ModuleAccess | Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | If | Fn | Call ) }
+Expr = { (Use | ModuleAccess | Init | Decl | Assig | AddAssig | SubAssig | ListRemAssig | MulAssig | DivAssig | PowAssig | ModAssig | Typedef | If | For | While | Fn | Call ) }
 
 Use = { "use " ~ Name }
 Init = { "var " ~ Name ~ (":" ~ Type)? ~ "=" ~ Value }
@@ -28,6 +28,9 @@ Else = { "else" ~ Expr* ~ "end" | "else" ~ "=>" ~ Expr }
 Fn = { "fn" ~ Name ~ ArgsDef? ~ (":" ~ Type)? ~ Expr* ~ "end" }
 ArgsDef = { "(" ~ (Name ~ ":" ~ Type ~ (", " ~ Name ~ ":" ~ Type)*)? ~ ")" }
 
+For = { "for" ~ Name ~ "in" ~ (Name | Range) ~ Expr* ~ "end" }
+While = { "while" ~ Value ~ Expr* ~ "end" }
+
 Assig = { Name ~ "=" ~ Value }
 AddAssig = { Name ~ "+=" ~ Value }
 SubAssig = { Name ~ "-=" ~ Value }
@@ -38,9 +41,9 @@ PowAssig = { Name ~ "^=" ~ Value }
 ModAssig = { Name ~ "%=" ~ Value }
 
 // Complex values
-Name = @{ (ASCII_ALPHA | "_")+ }
+Name = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 Index = { ASCII_DIGIT }
-Value = { ModuleAccess | TypeConversion | Op | And | Or | Cmp | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | And | Or }
+Value = { ModuleAccess | TypeConversion | Op | And | Or | Cmp | Parenthesis | Range | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name | And | Or }
 Call = { Name ~ "(" ~ (Value ~ ("," ~ Value)*)? ~ ")" }
 ModuleAccess = { Name ~ "::" ~ (Call | Name) }
 TypeConversion = { (TInt | TBool | TChar | TStr) ~ "(" ~ Value ~ ")" }
@@ -53,6 +56,7 @@ Char = @{ "'" ~ ASCII_ALPHA ~ "'" }
 Str = @{ "\"" ~ (!"\"" ~ ANY)+ ~ "\"" }
 
 // Composed
+Range = { Int ~ ".." ~ Int }
 Tuple = { "(" ~ Value ~ ("," ~ Value)* ~ ")" }
 Struct = { "(" ~ StructVal ~ ("," ~ StructVal)* ~ ")" }
 StructVal = { Name ~ ":" ~ Value }
@@ -64,7 +68,7 @@ DictPair = { Value ~ "->" ~ Value }
 Dict = { "[" ~ DictPair ~ ("," ~ DictPair)* ~ "]" }
 
 // Recursives
-Lhs = { ModuleAccess | TypeConversion | Parenthesis | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name }
+Lhs = { ModuleAccess | TypeConversion | Parenthesis | Range | Num | Int | Bool | Char | Str | Tuple | Struct | TupleAccess | List | ListAccess | Dict | Call | Name }
 Op = { Add | Sub | Mul | Div | Mod | Pow }
 
 Add = { Lhs ~ "+" ~ Value }
@@ -79,7 +83,7 @@ Less = { Lhs ~ "<" ~ Value }
 Great = { Lhs ~ ">" ~ Value }
 LessEq = { Lhs ~ "<=" ~ Value }
 GreatEq = { Lhs ~ ">=" ~ Value }
-Equal = { Lhs ~ "=" ~ Value }
+Equal = { Lhs ~ "==" ~ Value }
 NotEq = { Lhs ~ "!=" ~ Value }
 Not = { "!" ~ Value }
 Or = { (Lhs | Cmp) ~ "||" ~ Value }

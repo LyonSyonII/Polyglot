@@ -190,7 +190,7 @@ One-liners are supported by using the `=>` operator next to the condition.
     if condition // something
 
 You can chain conditions with the "&&" and "||" operators.  
-Be aware that these operators do not take priority, so parenthesis are needed.
+Be aware that in Polyglot operators do not take priority, so parenthesis are needed.
     
     // Check if (a > 0) AND (a < 5)
     if (a > 0) && (a < 5)
@@ -202,7 +202,7 @@ Be aware that these operators do not take priority, so parenthesis are needed.
         print("a is not 0")
     end
 
-> Probably on some flavors the operators *do* take priority, but Polyglot cannot ensure all of them will
+> Probably on most flavors the operators *do* take priority, but Polyglot cannot ensure all of them will
 
 #### Match
 The match pattern allows to check if a variable has certain compile-time values.  
@@ -417,7 +417,7 @@ So avoid using generic enums for a lot of types/arguments, as the number of impl
 ### Comparisons
 
     // Equal
-    if a = b
+    if a == b
 
     // Not equal
     if a != b

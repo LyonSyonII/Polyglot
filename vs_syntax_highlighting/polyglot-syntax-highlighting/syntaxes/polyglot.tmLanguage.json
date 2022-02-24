@@ -53,12 +53,16 @@
 					"match": "(>)|(<)|(=)|(>=)|(<=)|(:)|(&&)|(\\|\\|)|(\\+)|(-)|(\\*)|(/)|(%)|(\\.)"
 				},
 				{
-					"name": "constant.numeric.polyglot",
-					"match": "\\d"
+					"name": "variable.other.polyglot",
+					"match": "(_|[a-zA-Z])(\\w)*"
 				},
 				{
-					"name": "variable.other.polyglot",
-					"match": "\\w"
+					"name": "constant.other.polyglot",
+					"match": "WIP(\\d+\\.\\.\\d+)WIP"
+				},
+				{
+					"name": "constant.numeric.polyglot",
+					"match": "\\d"
 				}
 			]
 		},

@@ -3,6 +3,7 @@
 
 use derive_new::new;
 use either::Either;
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -48,6 +49,17 @@ pub enum Expr {
         context: String,
     },
     Else {
+        exprs: Vec<Expr>,
+        context: String,
+    },
+    For {
+        var: String,
+        range: Value,
+        exprs: Vec<Expr>,
+        context: String,
+    },
+    While {
+        cmp: Value,
         exprs: Vec<Expr>,
         context: String,
     },
@@ -188,8 +200,10 @@ pub struct Fn {
 
 #[derive(Default)]
 pub struct Scope {
-    vars: std::collections::HashMap<String, Type>,
-    funcs: std::collections::HashMap<String, Fn>,
+    vars: std::collections::HashMap<String, Type, std::hash::BuildHasherDefault<rustc_hash::FxHasher>>,
+    //vars: std::collections::HashMap<String, Type>,
+    funcs: std::collections::HashMap<String, Fn, std::hash::BuildHasherDefault<rustc_hash::FxHasher>>,
+    //funcs: std::collections::HashMap<String, Fn>,
     file: (String, PathBuf),
 }
 
@@ -280,7 +294,9 @@ impl Scope {
     }
 
     pub fn clone_into_new_scope(&self, new_scope_variables: Vec<(String, Type)>) -> Scope {
-        let mut map = HashMap::with_capacity(new_scope_variables.len());
+        
+        //let mut map = FxHashMap::default();
+        let mut map = HashMap::default();
         for var in new_scope_variables.into_iter() {
             map.insert(var.0, var.1);
         }
@@ -294,7 +310,8 @@ impl Scope {
 }
 
 impl std::ops::Deref for Scope {
-    type Target = std::collections::HashMap<String, Type>;
+    //type Target = HashMap<String, Type>;
+    type Target = FxHashMap<String, Type>;
 
     fn deref(&self) -> &Self::Target {
         &self.vars

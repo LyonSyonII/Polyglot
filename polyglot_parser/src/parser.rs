@@ -8,10 +8,8 @@ use std::sync::Mutex;
 
 use crate::tree::*;
 use clap::Parser as P;
-use ct_for::ct_for;
 use duplicate::duplicate;
 use either::Either;
-use inner::inner;
 use pest::iterators::{Pair, Pairs};
 use pest::Parser as Pest;
 use serde::{Deserialize, Serialize, Serializer};
@@ -100,6 +98,8 @@ fn parse_expr(expr: nodes::Expr, scope: &mut Scope) -> Expr {
             Expr::Typedef { name, r#type }
         }
         nodes::ExprChildren::If(i) => parse_if(i, scope),
+        nodes::ExprChildren::For(f) => parse_for(f, scope),
+        nodes::ExprChildren::For(w) => parse_while(w, scope),
         nodes::ExprChildren::Fn(f) => parse_fn(f, scope),
         nodes::ExprChildren::Call(c) => parse_call(c, scope),
     }
@@ -314,6 +314,21 @@ fn parse_else(e: nodes::Else, scope: &mut Scope) -> Expr {
     }
 }
 
+fn parse_for(f: nodes::For, scope: &mut Scope) -> Expr {
+    let var = f.get_Name().to_string();
+    let for_scope = scope.clone_into_new_scope(new_scope_variables)
+
+
+
+
+
+    Expr::For { var, range, exprs, context: f.text().into() }
+}
+
+fn parse_while(w: nodes::While, scope: &mut Scope) -> Expr {
+
+}
+
 fn parse_fn(f: nodes::Fn, scope: &mut Scope) -> Expr {
     let name = f.get_Name().to_string();
     let r#type = if let Some(ty) = f.get_Type() {
@@ -430,10 +445,7 @@ fn parse_value(value: &impl ToValueEnum, scope: &Scope) -> Value {
             name: n.text().into(),
             range: n.range(),
         },
-
-        // TODO! Complex values
-
-        // TODO! Check if both values are of the same type
+        
         nodes::ValueChildren::Op(op) => parse_value_op(op, scope),
         nodes::ValueChildren::Cmp(cmp) => Value::Bool(Bool::Cmp(parse_value_cmp(cmp, scope))),
         nodes::ValueChildren::Parenthesis(p) => Value::Parenthesis(Box::new(parse_value(&p.get_Value(), scope))),
