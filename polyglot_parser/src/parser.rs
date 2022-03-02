@@ -313,7 +313,7 @@ fn parse_else(e: nodes::Else, scope: &mut Scope) -> Expr {
         context: e.text().into(),
     }
 }
-
+// TODO! Arreglar parsing dels char
 fn parse_for(f: nodes::For, scope: &mut Scope) -> Expr {
     let mut names = f.list_Name();
     let var = names.next().unwrap().to_string();
@@ -321,7 +321,12 @@ fn parse_for(f: nodes::For, scope: &mut Scope) -> Expr {
     let range_type;
     let range = if let Some(n) = names.next() {
         let range = Value::Var { name: n.to_string(), range: n.range() };
-        range_type = parse_type_from_value(&range, scope);
+        let r_t = parse_type_from_value(&range, scope);
+        range_type = if let Type::List(l) = r_t {
+            *l
+        } else {
+            r_t
+        };
         range
     } else {
         let r = f.list_Range().next().unwrap();
