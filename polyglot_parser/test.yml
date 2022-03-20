@@ -4,9 +4,9 @@
     type: Void
     args:
       - - s
-        - Int
+        - Char
     exprs: []
-    context: "fn print(s: int) end"
+    context: "fn print(s: char) end"
 - Init:
     name: a
     type: Char
@@ -23,4 +23,21 @@
         - Char: "'"
         - Char: "'"
     context: "var list = ['a', 'a', 'a']"
-- Err
+- For:
+    var: i
+    range:
+      Var:
+        name: list
+        range:
+          start: 71
+          end: 75
+    exprs:
+      - Call:
+          name: print
+          args:
+            - Var:
+                name: i
+                range:
+                  start: 86
+                  end: 87
+    context: "for i in list\n    print(i)\nend"

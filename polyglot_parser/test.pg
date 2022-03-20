@@ -1,4 +1,4 @@
-fn print(s: int) end
+fn print(s: char) end
 var a = 'a'
 var list = ['a', 'a', 'a']
 

@@ -68,8 +68,8 @@
 		},
 		"strings": {
 			"name": "string.quoted.double.polyglot",
-			"begin": "\"",
-			"end": "\"",
+			"begin": "\"|'",
+			"end": "\"|'",
 			"patterns": [
 				{
 					"name": "constant.character.escape.polyglot",
